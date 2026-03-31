@@ -1,53 +1,65 @@
-@startuml Activity Diagram - Learning Process
-title Activity: Learning Process (Video & Quiz)
+@startuml
+title Aktivitas: Proses Mengikuti Pembelajaran
 
 skinparam backgroundColor #FEFEFE
-skinparam ActivityBackgroundColor #FFF3E0
-skinparam ActivityBorderColor #EF6C00
+skinparam ActivityBorderColor #9E9E9E
+skinparam ArrowColor #555555
 
-|Customer|
+|Pelanggan|
 start
-:Open Watch Course Page;
-:View Chapter List;
+:Buka halaman
+belajar kelas; <<#FFF9C4>>
+:Lihat daftar
+materi; <<#FFF9C4>>
+:Pilih materi; <<#FFF9C4>>
 
-partition "Consume Content" {
-    :Select Content Item;
-    if (Type is Video?) then (Yes)
-        :Watch Video;
-    elseif (Type is PDF?) then (Yes)
-        :Read PDF Document;
-    elseif (Type is Link?) then (Yes)
-        :Visit External Link;
-    elseif (Type is Quiz?) then (Yes)
-        :Start Quiz/Exercise;
-        repeat
-            :Answer Questions;
-        repeat while (More Questions?)
-        :Submit Answers;
-        
-        |System|
-        :Calculate Score;
-        :Check Passing Score (>= 80);
-        
-        |Customer|
-        if (Passed?) then (Yes)
-            :Show Success Message;
-            :Mark Quiz as Completed;
-        else (No)
-            :Show Failure Message;
-            :Prompt Retry;
+if (Tipe materi?) then (Video)
+    :Tonton video
+pembelajaran; <<#FFF9C4>>
+else (Lainnya)
+    if (PDF?) then (Ya)
+        :Baca dokumen PDF; <<#FFF9C4>>
+    else (Kuis)
+        :Mulai kerjakan
+Kuis; <<#FFF9C4>>
+        :Jawab soal-soal
+kuis; <<#FFF9C4>>
+        :Kirim jawaban; <<#FFF9C4>>
+
+        |Sistem|
+        :Hitung nilai
+ujian; <<#FFFFFF>>
+        :Cek kelulusan
+(nilai >= 80); <<#FFFFFF>>
+
+        |Pelanggan|
+        if (Lulus?) then (Ya)
+            :Tampilkan pesan
+berhasil; <<#FFF9C4>>
+            :Tandai kuis
+selesai; <<#FFF9C4>>
+        else (Tidak)
+            :Tampilkan pesan
+gagal, minta
+ulangi; <<#FFF9C4>>
             detach
         endif
     endif
-}
+endif
 
-|System|
-:Update Progress;
-:Check if All Required Contents Completed;
+|Sistem|
+:Perbarui persentase
+progres belajar; <<#FFFFFF>>
+:Cek apakah semua
+materi wajib
+selesai; <<#FFFFFF>>
 
-if (All Completed?) then (Yes)
-    :Unlock Certificate Claim;
+if (Semua selesai?) then (Ya)
+    :Buka akses
+klaim sertifikat; <<#FFFFFF>>
 endif
 
 stop
 @enduml
+
+

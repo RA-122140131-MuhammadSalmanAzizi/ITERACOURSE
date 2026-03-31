@@ -1,141 +1,132 @@
-@startuml ERD Diagram
+@startchen
 
-' Database Schema Representation
+title ERD: Platform Kursus Online
 
-entity "users" {
-  *id : INT <<PK>>
-  --
-  email : VARCHAR(255) <<UNIQUE>>
-  password_hash : VARCHAR(255)
-  full_name : VARCHAR(100)
-  role : ENUM('customer', 'dosen', 'admin')
-  status : ENUM('active', 'inactive', 'banned')
-  avatar_url : VARCHAR(255)
-  created_at : TIMESTAMP
-  updated_at : TIMESTAMP
+' ==============================
+' ENTITAS
+' ==============================
+
+entity PENGGUNA {
+    id <<key>>
+    email
+    nama_lengkap
+    peran
+    status
 }
 
-entity "courses" {
-  *id : INT <<PK>>
-  --
-  *instructor_id : INT <<FK>>
-  *category_id : INT <<FK>>
-  *level_id : INT <<FK>>
-  title : VARCHAR(255)
-  description : TEXT
-  price : DECIMAL(10, 2)
-  is_free : BOOLEAN
-  thumbnail_url : VARCHAR(255)
-  status : ENUM('draft', 'published', 'archived')
-  created_at : TIMESTAMP
-  updated_at : TIMESTAMP
+entity KURSUS {
+    id <<key>>
+    judul
+    harga
+    gratis
+    status
 }
 
-entity "categories" {
-  *id : INT <<PK>>
-  --
-  name : VARCHAR(50)
-  slug : VARCHAR(50)
-  icon_key : VARCHAR(50)
+entity KATEGORI {
+    id <<key>>
+    nama
+    slug
 }
 
-entity "levels" {
-  *id : INT <<PK>>
-  --
-  name : VARCHAR(50)
-  description : VARCHAR(255)
+entity LEVEL {
+    id <<key>>
+    nama
 }
 
-entity "chapters" {
-  *id : INT <<PK>>
-  --
-  *course_id : INT <<FK>>
-  title : VARCHAR(100)
-  sort_order : INT
+entity BAB {
+    id <<key>>
+    judul
+    urutan
 }
 
-entity "contents" {
-  *id : INT <<PK>>
-  --
-  *chapter_id : INT <<FK>>
-  content_type : ENUM('video', 'pdf', 'link', 'quiz')
-  title : VARCHAR(100)
-  resource_url : VARCHAR(500)
-  duration_seconds : INT
-  is_required : BOOLEAN DEFAULT TRUE
-  sort_order : INT
+entity KONTEN {
+    id <<key>>
+    judul
+    tipe_konten
+    wajib
 }
 
-entity "quiz_questions" {
-  *id : INT <<PK>>
-  --
-  *content_id : INT <<FK>>
-  question_text : TEXT
-  correct_answer_index : INT
-  options_array : JSON
+entity SOAL_KUIS {
+    id <<key>>
+    pertanyaan
+    jawaban_benar
 }
 
-entity "enrollments" {
-  *user_id : INT <<FK>>
-  *course_id : INT <<FK>>
-  --
-  enrolled_at : TIMESTAMP
-  completed_at : TIMESTAMP
-  last_accessed_at : TIMESTAMP
-  progress_percent : DECIMAL(5, 2)
-  PRIMARY_KEY(user_id, course_id)
+' ==============================
+' RELASI: PENGGUNA <-> KURSUS (M:N)
+' Diletakkan pertama supaya Graphviz
+' menempatkan PENGGUNA & KURSUS
+' di posisi berseberangan
+' ==============================
+
+relationship MENDAFTAR {
+    tgl_daftar
+    progres
 }
+MENDAFTAR -N- PENGGUNA
+MENDAFTAR -N- KURSUS
 
-entity "reviews" {
-  *id : INT <<PK>>
-  --
-  *user_id : INT <<FK>>
-  *course_id : INT <<FK>>
-  rating : TINYINT
-  comment : TEXT
-  status : ENUM('pending', 'approved', 'rejected')
-  created_at : TIMESTAMP
+relationship MEMBERI_ULASAN {
+    nilai
+    komentar
+    status
 }
+MEMBERI_ULASAN -N- PENGGUNA
+MEMBERI_ULASAN -N- KURSUS
 
-entity "certificates" {
-  *code : VARCHAR(20) <<PK>>
-  --
-  *user_id : INT <<FK>>
-  *course_id : INT <<FK>>
-  issued_at : DATE
-  pdf_url : VARCHAR(255)
+relationship MENDAPAT_SERTIFIKAT {
+    kode
+    tgl_terbit
 }
+MENDAPAT_SERTIFIKAT -N- PENGGUNA
+MENDAPAT_SERTIFIKAT -N- KURSUS
 
-entity "wishlists" {
-  *user_id : INT <<FK>>
-  *course_id : INT <<FK>>
-  --
-  added_at : TIMESTAMP
-  PRIMARY_KEY(user_id, course_id)
+' ==============================
+' RELASI: PENGGUNA -> KURSUS (1:N mengajar)
+' ==============================
+
+relationship MENGAJAR {
 }
+MENGAJAR -1- PENGGUNA
+MENGAJAR -N- KURSUS
 
-entity "system_settings" {
-  *setting_key : VARCHAR(50) <<PK>>
-  --
-  setting_value : TEXT
-  description : VARCHAR(255)
-  updated_at : TIMESTAMP
+' ==============================
+' RELASI: Klasifikasi KURSUS
+' Diletakkan setelah group PENGGUNA
+' supaya KATEGORI & LEVEL menempel
+' di sisi KURSUS yang berbeda
+' ==============================
+
+relationship DIKATEGORIKAN {
 }
+DIKATEGORIKAN -1- KATEGORI
+DIKATEGORIKAN -N- KURSUS
 
-' Relationships
-users ||--o{ enrollments : "1:N"
-courses ||--o{ enrollments : "1:N"
-users ||--o{ courses : "instructor 1:N"
-categories ||--o{ courses : "1:N"
-levels ||--o{ courses : "1:N"
-courses ||--|{ chapters : "1:N"
-chapters ||--|{ contents : "1:N"
-contents ||--o{ quiz_questions : "1:N"
-users ||--o{ reviews : "1:N"
-courses ||--o{ reviews : "1:N"
-users ||--o{ certificates : "1:N"
-courses ||--o{ certificates : "1:N"
-users ||--o{ wishlists : "1:N"
-courses ||--o{ wishlists : "1:N"
+relationship BERLEVEL {
+}
+BERLEVEL -1- LEVEL
+BERLEVEL -N- KURSUS
 
-@enduml
+' ==============================
+' RELASI: Chain konten KURSUS
+' Dideklarasikan berurutan supaya
+' Graphviz membentuk garis lurus
+' ke samping / bawah
+' ==============================
+
+relationship MEMILIKI_BAB {
+}
+MEMILIKI_BAB -1- KURSUS
+MEMILIKI_BAB -N- BAB
+
+relationship MEMILIKI_KONTEN {
+}
+MEMILIKI_KONTEN -1- BAB
+MEMILIKI_KONTEN -N- KONTEN
+
+relationship MEMILIKI_SOAL {
+}
+MEMILIKI_SOAL -1- KONTEN
+MEMILIKI_SOAL -N- SOAL_KUIS
+
+@endchen

@@ -1,0 +1,63 @@
+@startuml
+title Aktivitas: Memberikan dan Memoderasi Ulasan
+
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBorderColor #9E9E9E
+skinparam ArrowColor #555555
+
+|Pelanggan|
+start
+if (Sudah menyelesaikan kelas?) then (Ya)
+    :Buka halaman
+detail kelas; <<#FFF9C4>>
+    :Klik Tulis
+Ulasan; <<#FFF9C4>>
+    :Masukkan nilai
+bintang dan
+komentar; <<#FFF9C4>>
+    :Kirim ulasan; <<#FFF9C4>>
+
+    |Sistem|
+    :Simpan ulasan
+dengan status
+Menunggu; <<#FFFFFF>>
+
+    |Admin|
+    :Login ke
+Dashboard Admin; <<#F3E5F5>>
+    :Buka menu
+Manajemen
+Ulasan; <<#F3E5F5>>
+    :Tinjau ulasan
+baru; <<#F3E5F5>>
+
+    if (Tindakan?) then (Setujui)
+        :Klik tombol
+Setujui; <<#F3E5F5>>
+
+        |Sistem|
+        :Ubah status
+menjadi
+Disetujui; <<#FFFFFF>>
+        :Tampilkan ulasan
+untuk publik; <<#FFFFFF>>
+    else (Tolak)
+        |Admin|
+        :Klik tombol
+Tolak/Hapus; <<#F3E5F5>>
+
+        |Sistem|
+        :Hapus ulasan
+dari database; <<#FFFFFF>>
+    endif
+else (Belum)
+    |Pelanggan|
+    :Tidak memiliki
+akses menulis
+ulasan; <<#FFF9C4>>
+endif
+
+stop
+@enduml
+
+

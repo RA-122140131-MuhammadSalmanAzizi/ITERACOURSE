@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Settings, Database, Star,
-    LogOut, Eye, Sun, Moon
+    LogOut, Eye, Sun, Moon, HelpCircle
 } from 'lucide-react';
 import { useAuth, useTheme } from '../App';
 import '../pages/admin/AdminPages.css';
@@ -64,6 +64,10 @@ const AdminSidebar = () => {
                 <Link to="/admin/reviews" className={`nav-item ${isActive('/admin/reviews') ? 'active' : ''}`}>
                     <Star size={20} />
                     Reviews
+                </Link>
+                <Link to="/admin/faq" className={`nav-item ${isActive('/admin/faq') ? 'active' : ''}`}>
+                    <HelpCircle size={20} />
+                    FAQ
                 </Link>
             </nav>
 

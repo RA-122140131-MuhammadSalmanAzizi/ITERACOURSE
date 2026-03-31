@@ -1,41 +1,43 @@
-@startuml Activity Diagram - Admin User Management
-title Activity: Admin User Management
+@startuml
+title Aktivitas: Manajemen Pengguna
 
 skinparam backgroundColor #FEFEFE
-skinparam ActivityBackgroundColor #F3E5F5
-skinparam ActivityBorderColor #7B1FA2
+skinparam ActivityBorderColor #9E9E9E
+skinparam ArrowColor #555555
 
 |Admin|
 start
-:Login as Admin;
-:Navigate to "Users Management";
+:Login ke
+Dashboard Admin; <<#F3E5F5>>
+:Buka menu
+Manajemen
+Pengguna; <<#F3E5F5>>
+:Lihat daftar
+semua pengguna; <<#F3E5F5>>
+:Cari atau filter
+pengguna; <<#F3E5F5>>
+:Pilih pengguna
+yang ingin
+dikelola; <<#F3E5F5>>
 
-partition "View & Filter" {
-    :View User List;
-    :Select Role Filter (All/Customer/Dosen/Admin);
-    :Enter Search Query (Name/Email);
-    :System Filters List;
-}
-
-:Select Target User;
-
-if (Action?) then (Edit User)
-    :Click Edit Button;
-    :Open Edit Form (Mock);
-    :Modify User Details;
-    :Save Changes;
-else (Deactivate/Activate)
-    :Click Status Toggle Button;
-    if (Current Status?) then (Active)
-        :Confirm Deactivation;
-        :System Sets Status to 'Inactive';
-    else (Inactive)
-        :Confirm Activation;
-        :System Sets Status to 'Active';
-    endif
+if (Pilih Tindakan?) then (Edit Data)
+    :Ubah informasi
+pengguna; <<#F3E5F5>>
+    :Simpan perubahan; <<#F3E5F5>>
+else (Ubah Status)
+    :Aktifkan atau
+Nonaktifkan akun; <<#F3E5F5>>
+    :Konfirmasi
+perubahan status; <<#F3E5F5>>
 endif
 
-:Update User List UI;
+|Sistem|
+:Perbarui data
+di database; <<#FFFFFF>>
+:Perbarui tampilan
+daftar pengguna; <<#FFFFFF>>
 
 stop
 @enduml
+
+

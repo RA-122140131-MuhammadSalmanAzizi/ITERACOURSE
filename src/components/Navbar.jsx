@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, useTheme } from '../App';
 import {
     Menu, X, BookOpen, Award, User, LogOut,
-    ChevronDown, ArrowLeft, Sun, Moon
+    ChevronDown, ArrowLeft, Sun, Moon, HelpCircle
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import './Navbar.css';
@@ -80,6 +80,7 @@ const Navbar = () => {
 
                 <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
                     <Link to="/courses" className="nav-link">Courses</Link>
+                    <Link to="/faq" className="nav-link">FAQ</Link>
                     {isHomePage && (
                         <button
                             className="nav-link"

@@ -1654,3 +1654,125 @@
     font-size: 0.75rem;
     color: var(--text-muted);
 }
+
+/* ===== Admin FAQ Management Styles ===== */
+.faqs-admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.faq-admin-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.faq-admin-item:hover {
+    border-color: rgba(165, 42, 42, 0.3);
+}
+
+.faq-admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.faq-admin-header:hover {
+    background: rgba(165, 42, 42, 0.03);
+}
+
+.faq-admin-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.faq-admin-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: rgba(165, 42, 42, 0.1);
+    border-radius: 10px;
+    color: var(--primary-400);
+}
+
+.faq-admin-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.faq-admin-info h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.faq-category-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    background: rgba(165, 42, 42, 0.08);
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--primary-400);
+}
+
+.faq-admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.faq-admin-actions .btn-icon {
+    padding: 6px;
+    border-radius: 8px;
+}
+
+.faq-chevron {
+    color: var(--text-muted);
+    transition: transform 0.2s;
+}
+
+.faq-admin-answer {
+    padding: 0 1.25rem 1.25rem;
+    padding-left: calc(1.25rem + 36px + 0.75rem);
+    animation: faqAnswerFade 0.25s ease-out;
+}
+
+@keyframes faqAnswerFade {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.faq-admin-answer p {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    padding: 0.875rem 1rem;
+    background: var(--bg-primary);
+    border-radius: 10px;
+    border-left: 3px solid var(--primary-400);
+    margin: 0;
+}

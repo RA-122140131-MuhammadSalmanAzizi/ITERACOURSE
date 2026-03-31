@@ -1,0 +1,35 @@
+@startuml
+title Aktivitas: Klaim Sertifikat
+
+skinparam backgroundColor #FEFEFE
+skinparam ActivityBorderColor #9E9E9E
+skinparam ArrowColor #555555
+
+|Pelanggan|
+start
+if (Sudah menyelesaikan kelas?) then (Ya)
+    :Buka halaman
+detail kelas; <<#FFF9C4>>
+    :Klik tombol
+Klaim Sertifikat; <<#FFF9C4>>
+
+    |Sistem|
+    :Buat ID unik
+sertifikat; <<#FFFFFF>>
+    :Simpan data
+sertifikat; <<#FFFFFF>>
+
+    |Pelanggan|
+    :Lihat tampilan
+sertifikat; <<#FFF9C4>>
+    :Unduh sertifikat; <<#FFF9C4>>
+else (Belum)
+    :Tampilkan pesan:
+selesaikan kelas
+terlebih dahulu; <<#FFF9C4>>
+endif
+
+stop
+@enduml
+
+

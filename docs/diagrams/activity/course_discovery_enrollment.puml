@@ -1,41 +1,53 @@
-@startuml Activity Diagram - Course Discovery and Enrollment
-title Activity: Course Discovery and Enrollment
+@startuml
+title Aktivitas: Mencari dan Mendaftar Kelas
 
 skinparam backgroundColor #FEFEFE
-skinparam ActivityBackgroundColor #E3F2FD
-skinparam ActivityBorderColor #1565C0
+skinparam ActivityBorderColor #9E9E9E
+skinparam ArrowColor #555555
 
-|Customer|
+|Pelanggan|
 start
-:Browse Course Catalog;
-:Filter by Category/Level;
-:Select Interesting Course;
-:View Course Details (Price, Rating, Content List);
+:Telusuri katalog
+kelas; <<#FFF9C4>>
+:Gunakan filter
+pencarian
+(kategori/level); <<#FFF9C4>>
+:Pilih kelas yang
+diminati; <<#FFF9C4>>
+:Lihat detail kelas; <<#FFF9C4>>
 
-if (User Logged In?) then (No)
-    :Redirect to Login;
+if (Sudah login?) then (Belum)
+    :Arahkan ke
+halaman Login; <<#FFF9C4>>
     detach
 endif
 
-if (Already Enrolled?) then (Yes)
-    :Click "Continue Learning";
-    :Redirect to Watch/Read Page;
+if (Sudah terdaftar?) then (Ya)
+    :Klik Lanjutkan
+Belajar; <<#FFF9C4>>
     stop
-else (No)
-    if (Is Course Free?) then (Yes)
-        :Click "Enroll for Free";
-    else (No)
-        :Click "Buy Course";
-        :Process Payment (Mock);
+else (Belum)
+    if (Kelas gratis?) then (Ya)
+        :Klik Daftar
+Gratis; <<#FFF9C4>>
+    else (Tidak)
+        :Klik Beli Kelas; <<#FFF9C4>>
+        :Proses pembayaran; <<#FFF9C4>>
     endif
-    
-    |System|
-    :Add User to Enrolled List;
-    :Initialize Course Progress;
-    
-    |Customer|
-    :Redirect to Watch Course Page;
+
+    |Sistem|
+    :Tambahkan
+pelanggan ke
+daftar peserta; <<#FFFFFF>>
+    :Buat rekaman
+progres belajar; <<#FFFFFF>>
+
+    |Pelanggan|
+    :Masuk ke halaman
+belajar; <<#FFF9C4>>
 endif
 
 stop
 @enduml
+
+

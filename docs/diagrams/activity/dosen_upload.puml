@@ -1,35 +1,52 @@
-@startuml Activity Diagram - Dosen Course Upload
-title Activity: Dosen Upload Course
+@startuml
+title Aktivitas: Dosen Mengunggah Kelas
 
 skinparam backgroundColor #FEFEFE
-skinparam ActivityBackgroundColor #E0F7FA
-skinparam ActivityBorderColor #006064
+skinparam ActivityBorderColor #9E9E9E
+skinparam ArrowColor #555555
 
-|Dosen (Instructor)|
+|Dosen|
 start
-:Login as Dosen;
-:Navigate to Dosen Dashboard;
-:Click "Upload New Course";
-:Fill Course Meta (Title, Description, Category, Price);
-:Create Chapters;
+:Login sebagai
+Dosen; <<#E3F2FD>>
+:Buka menu
+Dashboard Dosen; <<#E3F2FD>>
+:Klik Unggah
+Kelas Baru; <<#E3F2FD>>
+:Isi detail kelas
+(Judul, Deskripsi,
+Kategori, Harga); <<#E3F2FD>>
+:Buat bab
+pembelajaran; <<#E3F2FD>>
 
 repeat
-    :Add Content to Chapter;
-    :Select Type (Video/PDF/Quiz);
-    if (Type == Quiz) then (Yes)
-        :Create Questions & Options;
-        :Set Correct Answers;
-    else (File/Link)
-         :Upload File or Paste URL;
+    :Tambahkan materi
+ke dalam bab; <<#E3F2FD>>
+    :Pilih tipe materi
+(Video/PDF/Kuis); <<#E3F2FD>>
+    if (Apakah Kuis?) then (Ya)
+        :Buat pertanyaan
+dan pilihan
+ganda; <<#E3F2FD>>
+        :Tentukan jawaban
+yang benar; <<#E3F2FD>>
+    else (File/Tautan)
+        :Unggah file atau
+masukkan URL; <<#E3F2FD>>
     endif
-repeat while (More Content?)
+repeat while (Ada materi lain?)
 
-:Review Course Structure;
-:Publish Course;
+:Tinjau ulang
+struktur kelas; <<#E3F2FD>>
+:Publikasikan kelas; <<#E3F2FD>>
 
-|System|
-:Save Course Data;
-:Make Course Available in Catalog;
+|Sistem|
+:Simpan data kelas
+ke database; <<#FFFFFF>>
+:Tampilkan kelas
+di katalog publik; <<#FFFFFF>>
 
 stop
 @enduml
+
+

@@ -33,6 +33,8 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminReviews from './pages/admin/AdminReviews';
 import AdminCourseSettings from './pages/admin/AdminCourseSettings';
 import AdminData from './pages/admin/AdminData';
+import AdminFAQ from './pages/admin/AdminFAQ';
+import FAQPage from './pages/customer/FAQPage';
 
 // Context
 export const AuthContext = createContext();
@@ -177,6 +179,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/course/:id" element={<CourseDetailPage />} />
+            <Route path="/faq" element={<FAQPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
@@ -283,6 +286,11 @@ function App() {
             <Route path="/admin/data" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminData />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/faq" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminFAQ />
               </ProtectedRoute>
             } />
           </Routes>

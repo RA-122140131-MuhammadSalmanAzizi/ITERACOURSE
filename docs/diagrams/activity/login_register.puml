@@ -1,44 +1,63 @@
-@startuml Activity Diagram - Login and Registration
-title Activity: User Login and Registration
+@startuml
+title Aktivitas: Pendaftaran dan Login Pengguna
 
 skinparam backgroundColor #FEFEFE
-skinparam ActivityBackgroundColor #E8F5E9
-skinparam ActivityBorderColor #388E3C
-skinparam ActivityDiamondBackgroundColor #FFF9C4
-skinparam ActivityDiamondBorderColor #F9A825
+skinparam ActivityBorderColor #9E9E9E
+skinparam ArrowColor #555555
 
-|Visitor|
+|Pengunjung|
 start
-:Access Application;
+:Buka platform
+e-learning; <<#E8F5E9>>
 
-if (Has Account?) then (Yes)
-  :Navigate to Login Page;
-  :Enter Email and Password;
-  :Submit Login Form;
-else (No)
-  :Navigate to Register Page;
-  :Enter Name, Email, Password;
-  :Submit Registration Form;
-  :Account Created;
-  :Auto-Login;
+if (Sudah punya akun?) then (Ya)
+    :Buka halaman
+Login; <<#E8F5E9>>
+    :Masukkan Email
+dan Kata Sandi; <<#E8F5E9>>
+    :Kirim data login; <<#E8F5E9>>
+else (Belum)
+    :Buka halaman
+Daftar; <<#E8F5E9>>
+    :Masukkan Nama,
+Email, dan
+Kata Sandi; <<#E8F5E9>>
+    :Kirim data
+pendaftaran; <<#E8F5E9>>
+    :Akun berhasil
+dibuat
+(Otomatis Login); <<#E8F5E9>>
 endif
 
-|System|
-:Validate Credentials;
-if (Valid?) then (Yes)
-    :Retrieve User Role;
-    if (Role == Admin?) then (Yes)
-        :Redirect to Admin Dashboard;
-    elseif (Role == Dosen?) then (Yes)
-        :Redirect to Dosen Dashboard;
-    else (Customer)
-        :Redirect to Customer Dashboard;
+|Sistem|
+:Validasi data
+kredensial; <<#FFFFFF>>
+
+if (Valid?) then (Ya)
+    :Cek peran
+pengguna; <<#FFFFFF>>
+    if (Admin?) then (Ya)
+        :Arahkan ke
+Dashboard Admin; <<#FFFFFF>>
+    else (Bukan Admin)
+        if (Dosen?) then (Ya)
+            :Arahkan ke
+Dashboard Dosen; <<#FFFFFF>>
+        else (Pelanggan)
+            :Arahkan ke
+Dashboard
+Pelanggan; <<#FFFFFF>>
+        endif
     endif
-else (No)
-    :Show Error Message;
-    :Stay on Login Page;
+else (Tidak)
+    :Tampilkan pesan
+kesalahan; <<#FFFFFF>>
+    :Kembali ke
+form login; <<#FFFFFF>>
     detach
 endif
 
 stop
 @enduml
+
+
