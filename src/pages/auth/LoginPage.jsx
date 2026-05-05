@@ -129,10 +129,6 @@ const LoginPage = () => {
                     }}>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
                             Gunakan akun Google untuk masuk atau membuat akun baru secara otomatis.
-                            <br />
-                            <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                                Dosen ITERA dapat mengajukan role setelah login.
-                            </span>
                         </p>
                     </div>
                 </div>
