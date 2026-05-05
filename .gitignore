@@ -30,3 +30,5 @@ migrate-imports.mjs
 *.njsproj
 *.sln
 *.sw?
+
+.vercel

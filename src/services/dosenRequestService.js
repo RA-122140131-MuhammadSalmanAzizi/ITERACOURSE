@@ -8,9 +8,11 @@ import { supabase } from '../lib/supabase';
 // ===== CHECK IF USER HAS ELIGIBLE EMAIL =====
 export function isEligibleForDosen(email) {
   if (!email) return false;
-  // DEVELOPMENT OVERRIDE: Allow any email to request Dosen role
-  // so the developer can test the flow using Gmail.
-  return true;
+  const lower = email.toLowerCase();
+  // Must be itera.ac.id domain but NOT student subdomain
+  const isItera = lower.endsWith('.itera.ac.id') || lower.endsWith('@itera.ac.id');
+  const isStudent = lower.includes('@student.itera.ac.id');
+  return isItera && !isStudent;
 }
 
 // ===== GET USER'S DOSEN REQUEST =====

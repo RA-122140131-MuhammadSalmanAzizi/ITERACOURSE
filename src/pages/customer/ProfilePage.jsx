@@ -19,6 +19,7 @@ const ProfilePage = () => {
     const [dosenFormData, setDosenFormData] = useState({ reason: '', department: '', staffId: '' });
     const [submitting, setSubmitting] = useState(false);
     const [dosenError, setDosenError] = useState('');
+    const [imgError, setImgError] = useState(false);
 
     const isEligible = dosenRequestService.isEligibleForDosen(profile?.email);
 
@@ -137,14 +138,18 @@ const ProfilePage = () => {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 fontSize: '1.5rem', fontWeight: 700, overflow: 'hidden',
                                 border: '3px solid var(--border-color)',
-                                ...(profile?.avatar_url ? {
-                                    backgroundImage: `url(${profile.avatar_url})`,
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                    color: 'transparent',
-                                } : {}),
+                                position: 'relative'
                             }}>
-                                {!profile?.avatar_url && (profile?.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                {profile?.avatar_url && !imgError ? (
+                                    <img 
+                                        src={profile.avatar_url} 
+                                        alt="" 
+                                        onError={() => setImgError(true)}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    (profile?.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                                )}
                             </div>
                             <div>
                                 <h3 style={{ margin: '0 0 0.25rem', color: 'var(--text-primary)' }}>{profile?.full_name}</h3>

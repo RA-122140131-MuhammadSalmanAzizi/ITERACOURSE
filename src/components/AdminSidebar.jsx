@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Settings, Database, Star, Users,
@@ -12,6 +13,7 @@ const AdminSidebar = () => {
     const navigate = useNavigate();
     const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const [imgError, setImgError] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -33,13 +35,17 @@ const AdminSidebar = () => {
             </div>
 
             <Link to="/customer/profile" className="sidebar-profile">
-                <div className="profile-avatar" style={profile?.avatar_url ? {
-                    backgroundImage: `url(${profile.avatar_url})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    color: 'transparent',
-                } : {}}>
-                    {!profile?.avatar_url && (profile?.full_name || 'A').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                <div className="profile-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {profile?.avatar_url && !imgError ? (
+                        <img 
+                            src={profile.avatar_url} 
+                            alt="" 
+                            onError={() => setImgError(true)}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                    ) : (
+                        (profile?.full_name || 'A').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                    )}
                 </div>
                 <div className="profile-info">
                     <span

@@ -9,8 +9,8 @@ const Footer = () => {
                 <div className="footer-grid">
                     <div className="footer-brand">
                         <Link to="/" className="footer-logo">
-                            <div className="logo-icon">
-                                <BookOpen size={20} />
+                            <div className="logo-icon" style={{ background: 'transparent' }}>
+                                <img src="/Logo_ITERA.png" alt="ITERA" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             </div>
                             <span>ITERA Course</span>
                         </Link>

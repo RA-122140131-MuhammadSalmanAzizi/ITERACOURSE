@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     BookOpen, Plus, Eye, LogOut, BarChart2, Sun, Moon, Bell
@@ -11,6 +12,7 @@ const DosenSidebar = () => {
     const navigate = useNavigate();
     const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const [imgError, setImgError] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -28,17 +30,21 @@ const DosenSidebar = () => {
         <aside className="dosen-sidebar">
             <div className="sidebar-logo">
                 <BookOpen size={24} />
-                <span>Instructor</span>
+                <span>Dosen Panel</span>
             </div>
 
             <Link to="/customer/profile" className="sidebar-profile">
-                <div className="profile-avatar" style={profile?.avatar_url ? {
-                    backgroundImage: `url(${profile.avatar_url})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    color: 'transparent',
-                } : {}}>
-                    {!profile?.avatar_url && (profile?.full_name || 'D').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                <div className="profile-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {profile?.avatar_url && !imgError ? (
+                        <img 
+                            src={profile.avatar_url} 
+                            alt="" 
+                            onError={() => setImgError(true)}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                    ) : (
+                        (profile?.full_name || 'D').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                    )}
                 </div>
                 <div className="profile-info">
                     <span
@@ -47,9 +53,9 @@ const DosenSidebar = () => {
                             fontSize: (profile?.full_name?.length || 0) > 20 ? '0.75rem' : (profile?.full_name?.length || 0) > 15 ? '0.8rem' : '0.875rem'
                         }}
                     >
-                        {profile?.full_name || 'Lecturer'}
+                        {profile?.full_name || 'Dosen'}
                     </span>
-                    <span className="profile-role">Lecturer</span>
+                    <span className="profile-role">Dosen</span>
                 </div>
             </Link>
 

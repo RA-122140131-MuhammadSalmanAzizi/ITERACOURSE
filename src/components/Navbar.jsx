@@ -23,6 +23,7 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [showThemeToast, setShowThemeToast] = useState(false);
+    const [imgError, setImgError] = useState(false);
 
     const isHomePage = location.pathname === '/';
 
@@ -78,7 +79,6 @@ const Navbar = () => {
 
     const getAvatarInitials = () => {
         if (!user) return '?';
-        if (user.avatar_url) return null; // Will use img tag
         return (user.full_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     };
 
@@ -86,8 +86,8 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="navbar-container">
                 <Link to="/" className="navbar-logo">
-                    <div className="logo-icon">
-                        {isHomePage ? <BookOpen size={24} /> : <ArrowLeft size={24} />}
+                    <div className="logo-icon" style={{ background: 'transparent' }}>
+                        <img src="/Logo_ITERA.png" alt="ITERA" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
                     <span className="logo-text">{isHomePage ? 'ITERA Course' : 'Back to Site'}</span>
                 </Link>
@@ -149,7 +149,7 @@ const Navbar = () => {
                                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                                 >
                                     <div className="avatar">
-                                        {user.avatar_url ? <img src={user.avatar_url} alt="" style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} /> : getAvatarInitials()}
+                                        {user.avatar_url && !imgError ? <img src={user.avatar_url} alt="" onError={() => setImgError(true)} style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} /> : getAvatarInitials()}
                                     </div>
                                     <span className="profile-name">{user.full_name}</span>
                                     <ChevronDown size={16} />
@@ -159,7 +159,7 @@ const Navbar = () => {
                                     <div className="dropdown-menu">
                                         <div className="dropdown-header">
                                             <div className="avatar-lg">
-                                                {user.avatar_url ? <img src={user.avatar_url} alt="" style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} /> : getAvatarInitials()}
+                                                {user.avatar_url && !imgError ? <img src={user.avatar_url} alt="" onError={() => setImgError(true)} style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} /> : getAvatarInitials()}
                                             </div>
                                             <div>
                                                 <p className="dropdown-name">{user.full_name}</p>
