@@ -252,7 +252,9 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: var(--primary-600);
+    background-image: url('/hero-bg.png');
+    background-size: cover;
+    background-position: center;
     position: relative;
     overflow: hidden;
 }
@@ -261,8 +263,8 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--gradient-mesh);
-    opacity: 0.3;
+    background: #4d0000; /* Primary 900 */
+    opacity: 0.85;
 }
 
 .visual-content {
