@@ -4,6 +4,33 @@ import './index.css'
 import './wireframe.css'
 import App from './App.jsx'
 
+// ============================================
+// SECURITY: Anti-DevTools (Production Only)
+// ============================================
+if (import.meta.env.PROD) {
+  // Block right click
+  document.addEventListener('contextmenu', event => event.preventDefault()); 
+  
+  document.addEventListener('keydown', function(e) {
+    // Block F12
+    if (e.key === 'F12' || e.keyCode === 123) e.preventDefault();
+    // Block Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Element Inspector)
+    if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) e.preventDefault();
+    // Block Ctrl+U (View Source)
+    if (e.ctrlKey && e.key === 'u') e.preventDefault();
+  });
+
+  // Anti-Debugger loop (creates infinite loop if devtools is open)
+  setInterval(function() {
+    var start = new Date();
+    debugger;
+    var end = new Date();
+    if (end - start > 100) {
+       document.body.innerHTML = "<h1 style='text-align:center;margin-top:20vh;font-family:sans-serif;'>Access Denied. DevTools is disabled.</h1>";
+    }
+  }, 1000);
+}
+
 // Wireframe mode: add ?wireframe to URL to activate
 if (window.location.search.includes('wireframe')) {
   document.documentElement.setAttribute('data-wireframe', 'true');
