@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
     Award, Eye, Search, Download
 } from 'lucide-react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../contexts/AuthContext';
 import AdminSidebar from '../../components/AdminSidebar';
 import './AdminPages.css';
 

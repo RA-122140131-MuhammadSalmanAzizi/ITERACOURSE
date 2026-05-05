@@ -1,0 +1,970 @@
+/* ============================================
+   LOW-FIDELITY WIREFRAME OVERLAY
+   Add ?wireframe to URL to activate
+   e.g. http://localhost:5173/?wireframe#/admin
+   
+   Style: Abstract gray layout wireframe
+   - Text → gray horizontal bars
+   - Headings → generic "Section" labels
+   - Icons → gray circles
+   - Images → placeholder boxes with ▲ icon
+   - Buttons → "Button" label
+   ============================================ */
+
+/* ===== Disable animations & transitions ===== */
+[data-wireframe] *,
+[data-wireframe] *::before,
+[data-wireframe] *::after {
+    animation: none !important;
+    transition: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+}
+
+/* ===== Base colors ===== */
+[data-wireframe] {
+    --wf-white: #ffffff;
+    --wf-gray-50: #f7f7f7;
+    --wf-gray-100: #eeeeee;
+    --wf-gray-200: #e0e0e0;
+    --wf-gray-300: #d0d0d0;
+    --wf-gray-400: #b0b0b0;
+    --wf-gray-500: #909090;
+    --wf-gray-600: #707070;
+    --wf-gray-800: #404040;
+    --wf-gray-900: #222222;
+    --wf-bar-color: #d0d0d0;
+    --wf-bar-height: 10px;
+    --wf-bar-gap: 8px;
+}
+
+/* ==============================================
+   1. GLOBAL BACKGROUNDS → All white/light gray
+   ============================================== */
+[data-wireframe],
+[data-wireframe] body,
+[data-wireframe] main,
+[data-wireframe] section,
+[data-wireframe] .home-page,
+[data-wireframe] .faq-page,
+[data-wireframe] .courses-page,
+[data-wireframe] .course-detail-page,
+[data-wireframe] .admin-page,
+[data-wireframe] .admin-main,
+[data-wireframe] .customer-page,
+[data-wireframe] .dosen-page,
+[data-wireframe] .watch-page,
+[data-wireframe] .auth-page,
+[data-wireframe] .profile-page {
+    background: var(--wf-white) !important;
+    color: var(--wf-gray-800) !important;
+}
+
+/* Hero backgrounds → light gray */
+[data-wireframe] .hero,
+[data-wireframe] .faq-hero {
+    background: var(--wf-gray-50) !important;
+}
+
+[data-wireframe] .hero-bg,
+[data-wireframe] .hero-overlay,
+[data-wireframe] .faq-hero-bg,
+[data-wireframe] .hero-bg::before,
+[data-wireframe] .hero-bg::after {
+    display: none !important;
+    background: none !important;
+}
+
+[data-wireframe] .highlight {
+    color: var(--wf-gray-800) !important;
+    -webkit-text-fill-color: var(--wf-gray-800) !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+}
+
+/* ==============================================
+   2. TEXT → Gray horizontal bars
+   ============================================== */
+
+/* Paragraph / body text → gray bars */
+[data-wireframe] p,
+[data-wireframe] .hero-description,
+[data-wireframe] .course-description,
+[data-wireframe] .review-text,
+[data-wireframe] .testimonial-card p,
+[data-wireframe] .activity-content p,
+[data-wireframe] .activity-content span,
+[data-wireframe] .notif-content p,
+[data-wireframe] .faq-answer p,
+[data-wireframe] .faq-admin-answer p,
+[data-wireframe] .why-card p,
+[data-wireframe] .step-item p,
+[data-wireframe] .faq-contact-cta p,
+[data-wireframe] .modal-details p {
+    color: transparent !important;
+    overflow: hidden !important;
+    position: relative !important;
+    background-image: repeating-linear-gradient(to bottom,
+            var(--wf-bar-color) 0px,
+            var(--wf-bar-color) var(--wf-bar-height),
+            transparent var(--wf-bar-height),
+            transparent calc(var(--wf-bar-height) + var(--wf-bar-gap))) !important;
+    background-size: 85% auto !important;
+    background-repeat: no-repeat !important;
+    background-position: left top !important;
+    min-height: calc(var(--wf-bar-height) * 2 + var(--wf-bar-gap)) !important;
+}
+
+/* Description under headers */
+[data-wireframe] .admin-header p,
+[data-wireframe] .section-header p,
+[data-wireframe] .page-header p,
+[data-wireframe] .faq-hero p {
+    color: transparent !important;
+    background-image: linear-gradient(to right,
+            var(--wf-gray-300) 0%,
+            var(--wf-gray-300) 60%,
+            transparent 60%) !important;
+    background-size: 100% var(--wf-bar-height) !important;
+    background-repeat: no-repeat !important;
+    background-position: left center !important;
+    min-height: var(--wf-bar-height) !important;
+    max-height: 1.5em !important;
+}
+
+/* Short inline text → single bar */
+[data-wireframe] span:not(.faq-number):not(.logo-text):not(.faq-q-text),
+[data-wireframe] .profile-name,
+[data-wireframe] .profile-role,
+[data-wireframe] .dropdown-name,
+[data-wireframe] .dropdown-role,
+[data-wireframe] .user-name,
+[data-wireframe] .user-email,
+[data-wireframe] .course-category,
+[data-wireframe] .course-instructor span,
+[data-wireframe] .review-course,
+[data-wireframe] .review-date,
+[data-wireframe] .reviewer-details h4,
+[data-wireframe] .cert-id,
+[data-wireframe] .date-display,
+[data-wireframe] .settings-item-desc,
+[data-wireframe] .settings-item-count,
+[data-wireframe] .detail-label,
+[data-wireframe] .detail-value {
+    color: transparent !important;
+    background: linear-gradient(to right, var(--wf-gray-300) 0%, var(--wf-gray-300) 100%) no-repeat left center !important;
+    background-size: clamp(40px, 70%, 120px) 8px !important;
+    display: inline-block !important;
+    min-width: 50px !important;
+}
+
+/* Table cell text → gray bars */
+[data-wireframe] .admin-table td {
+    color: transparent !important;
+}
+
+[data-wireframe] .admin-table td>*:not(.action-buttons):not(.user-cell):not(.rating):not(.badge):not(.status-badge):not(.role-badge) {
+    color: transparent !important;
+    background: linear-gradient(to right, var(--wf-gray-300) 0%, var(--wf-gray-300) 100%) no-repeat left center !important;
+    background-size: 75% 8px !important;
+}
+
+/* ==============================================
+   3. HEADINGS → Generic "Section" labels
+   ============================================== */
+
+/* Main page title → "Main Header" */
+[data-wireframe] .hero-title,
+[data-wireframe] .faq-hero h1,
+[data-wireframe] .page-header h1 {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    margin-bottom: 0.75rem !important;
+}
+
+[data-wireframe] .hero-title::before,
+[data-wireframe] .faq-hero h1::before,
+[data-wireframe] .page-header h1::before {
+    content: 'Main Header' !important;
+    font-size: 1.75rem !important;
+    font-weight: 700 !important;
+    color: var(--wf-gray-800) !important;
+    display: block !important;
+    line-height: 1.3 !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Admin page header → "Page Title" */
+[data-wireframe] .admin-header h1 {
+    font-size: 0 !important;
+    line-height: 0 !important;
+}
+
+[data-wireframe] .admin-header h1::before {
+    content: 'Page Title' !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: var(--wf-gray-800) !important;
+    display: block !important;
+    line-height: 1.3 !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Section headers → "Section" */
+[data-wireframe] .section-header h2,
+[data-wireframe] .content-section .section-header h2,
+[data-wireframe] .why-section h2,
+[data-wireframe] .testimonials-section h2,
+[data-wireframe] .register-steps-section h2,
+[data-wireframe] .categories-section h2,
+[data-wireframe] .courses-section h2,
+[data-wireframe] .instructors-title,
+[data-wireframe] .faq-contact-cta h3 {
+    font-size: 0 !important;
+    line-height: 0 !important;
+}
+
+[data-wireframe] .section-header h2::before,
+[data-wireframe] .content-section .section-header h2::before,
+[data-wireframe] .why-section h2::before,
+[data-wireframe] .testimonials-section h2::before,
+[data-wireframe] .register-steps-section h2::before,
+[data-wireframe] .categories-section h2::before,
+[data-wireframe] .courses-section h2::before,
+[data-wireframe] .instructors-title::before,
+[data-wireframe] .faq-contact-cta h3::before {
+    content: 'Section' !important;
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+    color: var(--wf-gray-800) !important;
+    display: block !important;
+    line-height: 1.3 !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Card titles → "Subheader" */
+[data-wireframe] .course-title,
+[data-wireframe] .why-card h3,
+[data-wireframe] .step-item h3,
+[data-wireframe] .category-card h3,
+[data-wireframe] .instructor-card h4,
+[data-wireframe] .faq-q-text,
+[data-wireframe] .faq-admin-info h4,
+[data-wireframe] .notif-content h4 {
+    font-size: 0 !important;
+    line-height: 0 !important;
+}
+
+[data-wireframe] .course-title::before,
+[data-wireframe] .why-card h3::before,
+[data-wireframe] .step-item h3::before,
+[data-wireframe] .category-card h3::before,
+[data-wireframe] .instructor-card h4::before,
+[data-wireframe] .faq-q-text::before,
+[data-wireframe] .faq-admin-info h4::before,
+[data-wireframe] .notif-content h4::before {
+    content: 'Subheader' !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: var(--wf-gray-600) !important;
+    display: block !important;
+    line-height: 1.4 !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Stat values → keep but gray */
+[data-wireframe] .stat-value {
+    color: var(--wf-gray-800) !important;
+}
+
+[data-wireframe] .stat-label {
+    color: transparent !important;
+    background: linear-gradient(to right, var(--wf-gray-300) 0%, var(--wf-gray-300) 100%) no-repeat left center !important;
+    background-size: 70% 7px !important;
+    min-height: 10px !important;
+}
+
+/* ==============================================
+   4. NAVIGATION → Generic labels
+   ============================================== */
+
+/* Navbar links → "Menu" */
+[data-wireframe] .nav-link {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .nav-link::before {
+    content: 'Menu' !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: var(--wf-gray-600) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Logo text → hide, show placeholder */
+[data-wireframe] .logo-text {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .logo-text::before {
+    content: 'Logo' !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: var(--wf-gray-600) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Logo icon → simple gray box with X */
+[data-wireframe] .logo-icon {
+    background: var(--wf-gray-200) !important;
+    border: 2px solid var(--wf-gray-400) !important;
+    border-radius: 4px !important;
+    position: relative !important;
+}
+
+/* Sidebar nav items → "Menu Item" */
+[data-wireframe] .sidebar-nav .nav-item {
+    font-size: 0 !important;
+    color: transparent !important;
+    background: transparent !important;
+    border-radius: 4px !important;
+}
+
+[data-wireframe] .sidebar-nav .nav-item::after {
+    content: 'Menu Item' !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    color: var(--wf-gray-600) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+[data-wireframe] .sidebar-nav .nav-item.active {
+    background: var(--wf-gray-100) !important;
+    border-left: 3px solid var(--wf-gray-500) !important;
+}
+
+[data-wireframe] .sidebar-nav .nav-item.active::after {
+    color: var(--wf-gray-800) !important;
+    font-weight: 700 !important;
+}
+
+/* Sidebar panel name */
+[data-wireframe] .sidebar-logo span {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .sidebar-logo span::before {
+    content: 'Panel' !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: var(--wf-gray-600) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Sidebar footer items */
+[data-wireframe] .sidebar-footer .nav-item {
+    font-size: 0 !important;
+    color: transparent !important;
+}
+
+[data-wireframe] .sidebar-footer .nav-item::after {
+    content: 'Action' !important;
+    font-size: 0.85rem !important;
+    color: var(--wf-gray-500) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* ==============================================
+   5. BUTTONS → Generic "Button" label
+   ============================================== */
+[data-wireframe] .btn,
+[data-wireframe] .btn-primary,
+[data-wireframe] .btn-secondary,
+[data-wireframe] .btn-ghost,
+[data-wireframe] .btn-white,
+[data-wireframe] button[class*="btn-"],
+[data-wireframe] a[class*="btn"] {
+    font-size: 0 !important;
+    background: var(--wf-white) !important;
+    border: 2px solid var(--wf-gray-400) !important;
+    color: transparent !important;
+    border-radius: 20px !important;
+    padding: 0.5rem 1.25rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 80px !important;
+    height: 36px !important;
+}
+
+[data-wireframe] .btn::before,
+[data-wireframe] .btn-primary::before,
+[data-wireframe] .btn-secondary::before,
+[data-wireframe] .btn-ghost::before,
+[data-wireframe] .btn-white::before,
+[data-wireframe] button[class*="btn-"]::before,
+[data-wireframe] a[class*="btn"]::before {
+    content: 'Button' !important;
+    font-size: 0.8rem !important;
+    color: var(--wf-gray-600) !important;
+    display: inline !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+    font-weight: 500 !important;
+}
+
+/* Primary buttons → filled */
+[data-wireframe] .btn-primary {
+    background: var(--wf-gray-600) !important;
+}
+
+[data-wireframe] .btn-primary::before {
+    color: var(--wf-white) !important;
+}
+
+/* Hide button inner icons */
+[data-wireframe] .btn svg,
+[data-wireframe] .btn-primary svg,
+[data-wireframe] .btn-secondary svg,
+[data-wireframe] a[class*="btn"] svg {
+    display: none !important;
+}
+
+/* ==============================================
+   6. ICONS (SVGs) → Gray circles
+   ============================================== */
+[data-wireframe] svg {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Icon containers → gray circles */
+[data-wireframe] .stat-icon,
+[data-wireframe] .why-icon,
+[data-wireframe] .step-icon,
+[data-wireframe] .category-icon,
+[data-wireframe] .notif-icon,
+[data-wireframe] .faq-hero-icon,
+[data-wireframe] .faq-cta-icon,
+[data-wireframe] .faq-admin-icon,
+[data-wireframe] .certificate-verify-icon,
+[data-wireframe] .faq-number {
+    background: var(--wf-gray-200) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+    border-radius: 50% !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+}
+
+/* Avatars → gray circles with no content */
+[data-wireframe] .profile-avatar,
+[data-wireframe] .avatar,
+[data-wireframe] .avatar-lg,
+[data-wireframe] .user-avatar,
+[data-wireframe] .user-avatar-sm,
+[data-wireframe] .user-avatar-lg {
+    background: var(--wf-gray-200) !important;
+    color: transparent !important;
+    border: 2px solid var(--wf-gray-300) !important;
+    border-radius: 50% !important;
+}
+
+/* Profile info in sidebar → simplified */
+[data-wireframe] .sidebar-profile .profile-name,
+[data-wireframe] .sidebar-profile .profile-role {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .sidebar-profile .profile-name::before {
+    content: '' !important;
+    display: block !important;
+    width: 80px !important;
+    height: 8px !important;
+    background: var(--wf-gray-300) !important;
+    border-radius: 4px !important;
+    margin-bottom: 4px !important;
+}
+
+[data-wireframe] .sidebar-profile .profile-role::before {
+    content: '' !important;
+    display: block !important;
+    width: 55px !important;
+    height: 6px !important;
+    background: var(--wf-gray-200) !important;
+    border-radius: 3px !important;
+}
+
+/* ==============================================
+   7. IMAGES → Placeholder boxes
+   ============================================== */
+[data-wireframe] img {
+    opacity: 0 !important;
+}
+
+[data-wireframe] .course-image,
+[data-wireframe] .course-thumb,
+[data-wireframe] .course-thumb-sm,
+[data-wireframe] .banner-preview,
+[data-wireframe] .instructor-avatar-lg {
+    background: var(--wf-gray-100) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+    border-radius: 4px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Image placeholder icon (mountain) */
+[data-wireframe] .course-image::after,
+[data-wireframe] .banner-preview::after,
+[data-wireframe] .instructor-avatar-lg::after {
+    content: '🏔' !important;
+    display: flex !important;
+    position: absolute !important;
+    inset: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.5rem !important;
+    color: var(--wf-gray-300) !important;
+    background: var(--wf-gray-100) !important;
+    opacity: 0.5 !important;
+    filter: grayscale(1) !important;
+}
+
+/* ==============================================
+   8. CARDS & CONTAINERS → Simple bordered boxes
+   ============================================== */
+[data-wireframe] .admin-sidebar,
+[data-wireframe] .customer-sidebar,
+[data-wireframe] .dosen-sidebar {
+    background: var(--wf-gray-50) !important;
+    border-right: 2px solid var(--wf-gray-300) !important;
+}
+
+[data-wireframe] .navbar {
+    background: var(--wf-white) !important;
+    border-bottom: 2px solid var(--wf-gray-300) !important;
+}
+
+[data-wireframe] .stat-card,
+[data-wireframe] .content-section,
+[data-wireframe] .course-card,
+[data-wireframe] .category-card,
+[data-wireframe] .why-card,
+[data-wireframe] .testimonial-card,
+[data-wireframe] .review-card,
+[data-wireframe] .faq-item,
+[data-wireframe] .faq-admin-item,
+[data-wireframe] .step-item,
+[data-wireframe] .instructor-card,
+[data-wireframe] .hero-card,
+[data-wireframe] .quick-action-btn,
+[data-wireframe] .banner-card,
+[data-wireframe] .notification-item,
+[data-wireframe] .detail-section,
+[data-wireframe] .modal-content,
+[data-wireframe] .settings-item,
+[data-wireframe] .option-card,
+[data-wireframe] .content-type-card,
+[data-wireframe] .faq-contact-cta,
+[data-wireframe] .period-selector,
+[data-wireframe] .category-admin-card,
+[data-wireframe] .sidebar-profile,
+[data-wireframe] .filters-sidebar,
+[data-wireframe] .selected-user-card,
+[data-wireframe] .user-selector,
+[data-wireframe] .certificate-card,
+[data-wireframe] .auth-card,
+[data-wireframe] .profile-card {
+    background: var(--wf-white) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+    border-radius: 4px !important;
+}
+
+/* Footer */
+[data-wireframe] footer,
+[data-wireframe] .footer {
+    background: var(--wf-gray-50) !important;
+    border-top: 2px solid var(--wf-gray-300) !important;
+}
+
+/* Footer text → bars */
+[data-wireframe] footer p,
+[data-wireframe] footer a,
+[data-wireframe] footer span,
+[data-wireframe] footer h3,
+[data-wireframe] footer h4,
+[data-wireframe] .footer p,
+[data-wireframe] .footer a,
+[data-wireframe] .footer span {
+    color: transparent !important;
+    background: linear-gradient(to right, var(--wf-gray-300) 0%, var(--wf-gray-300) 100%) no-repeat left center !important;
+    background-size: clamp(30px, 60%, 100px) 7px !important;
+    display: inline-block !important;
+    min-width: 40px !important;
+}
+
+/* ==============================================
+   9. INPUTS → Simple bordered boxes
+   ============================================== */
+[data-wireframe] input,
+[data-wireframe] select,
+[data-wireframe] textarea,
+[data-wireframe] .search-minimal,
+[data-wireframe] .faq-search-bar,
+[data-wireframe] .search-bar,
+[data-wireframe] .filter-select,
+[data-wireframe] .input {
+    background: var(--wf-white) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+    color: var(--wf-gray-400) !important;
+    border-radius: 4px !important;
+}
+
+/* ==============================================
+   10. BADGES → Simple rounded gray pills
+   ============================================== */
+[data-wireframe] .badge,
+[data-wireframe] .status-badge,
+[data-wireframe] .role-badge,
+[data-wireframe] .nav-badge,
+[data-wireframe] .faq-category-badge,
+[data-wireframe] .faq-cat-count,
+[data-wireframe] [class*="badge-"] {
+    background: var(--wf-gray-200) !important;
+    color: var(--wf-gray-500) !important;
+    border: 1px solid var(--wf-gray-300) !important;
+    border-radius: 10px !important;
+    font-size: 0.65rem !important;
+}
+
+/* ==============================================
+   11. TABLES → Clean grid lines
+   ============================================== */
+[data-wireframe] .admin-table th {
+    background: var(--wf-gray-100) !important;
+    color: var(--wf-gray-500) !important;
+    border-bottom: 2px solid var(--wf-gray-300) !important;
+    font-size: 0 !important;
+}
+
+[data-wireframe] .admin-table th::before {
+    content: 'Column' !important;
+    font-size: 0.7rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+[data-wireframe] .admin-table td {
+    border-bottom: 1px solid var(--wf-gray-200) !important;
+}
+
+[data-wireframe] .admin-table tr:hover td {
+    background: var(--wf-gray-50) !important;
+}
+
+/* ==============================================
+   12. RATINGS → Gray dots
+   ============================================== */
+[data-wireframe] .rating,
+[data-wireframe] .review-rating,
+[data-wireframe] .testimonial-stars {
+    display: flex !important;
+    gap: 3px !important;
+}
+
+[data-wireframe] .rating svg,
+[data-wireframe] .review-rating svg,
+[data-wireframe] .testimonial-stars svg {
+    opacity: 1 !important;
+    width: 12px !important;
+    height: 12px !important;
+    background: var(--wf-gray-300) !important;
+    border-radius: 50% !important;
+}
+
+/* ==============================================
+   13. TABS & CATEGORY BUTTONS
+   ============================================== */
+[data-wireframe] .tab-btn,
+[data-wireframe] .faq-category-btn,
+[data-wireframe] .period-tab,
+[data-wireframe] .preset-btn {
+    background: var(--wf-white) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+    color: var(--wf-gray-500) !important;
+    border-radius: 4px !important;
+    font-size: 0 !important;
+}
+
+[data-wireframe] .tab-btn::before,
+[data-wireframe] .faq-category-btn::before,
+[data-wireframe] .period-tab::before,
+[data-wireframe] .preset-btn::before {
+    content: 'Tab' !important;
+    font-size: 0.75rem !important;
+    color: var(--wf-gray-500) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+[data-wireframe] .tab-btn.active,
+[data-wireframe] .faq-category-btn.active,
+[data-wireframe] .period-tab.active,
+[data-wireframe] .preset-btn.active {
+    background: var(--wf-gray-500) !important;
+    border-color: var(--wf-gray-500) !important;
+}
+
+[data-wireframe] .tab-btn.active::before,
+[data-wireframe] .faq-category-btn.active::before,
+[data-wireframe] .period-tab.active::before,
+[data-wireframe] .preset-btn.active::before {
+    color: var(--wf-white) !important;
+}
+
+/* Hide inner content of tabs (icons, counts) */
+[data-wireframe] .faq-category-btn span,
+[data-wireframe] .faq-category-btn svg,
+[data-wireframe] .tab-btn svg {
+    display: none !important;
+}
+
+/* Carousel arrows */
+[data-wireframe] .faq-carousel-arrow {
+    background: var(--wf-white) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    border-radius: 50% !important;
+    font-size: 0 !important;
+    position: relative !important;
+}
+
+[data-wireframe] .faq-carousel-arrow.left::before {
+    content: '‹' !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.25rem !important;
+    color: var(--wf-gray-500) !important;
+    position: absolute !important;
+    inset: 0 !important;
+}
+
+[data-wireframe] .faq-carousel-arrow.right::before {
+    content: '›' !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.25rem !important;
+    color: var(--wf-gray-500) !important;
+    position: absolute !important;
+    inset: 0 !important;
+}
+
+/* ==============================================
+   14. ACTION BUTTONS → simple small circles
+   ============================================== */
+[data-wireframe] .action-btn,
+[data-wireframe] .btn-icon,
+[data-wireframe] .btn-icon-xs,
+[data-wireframe] .action-buttons button {
+    background: var(--wf-white) !important;
+    border: 1px solid var(--wf-gray-300) !important;
+    color: var(--wf-gray-400) !important;
+    border-radius: 4px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    font-size: 0 !important;
+}
+
+/* ==============================================
+   15. MISC ELEMENTS
+   ============================================== */
+
+/* Theme toggle & profile trigger */
+[data-wireframe] .theme-toggle-btn,
+[data-wireframe] .profile-trigger {
+    background: var(--wf-white) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+}
+
+[data-wireframe] .profile-trigger span {
+    display: none !important;
+}
+
+/* Mobile menu button */
+[data-wireframe] .mobile-menu-btn {
+    border: 2px solid var(--wf-gray-300) !important;
+    border-radius: 4px !important;
+}
+
+/* Quick actions */
+[data-wireframe] .quick-action-btn span {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .quick-action-btn span::before {
+    content: 'Action' !important;
+    font-size: 0.75rem !important;
+    color: var(--wf-gray-500) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Dropdown menu */
+[data-wireframe] .dropdown-menu {
+    background: var(--wf-white) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+}
+
+[data-wireframe] .dropdown-item {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .dropdown-item::before {
+    content: 'Menu Item' !important;
+    font-size: 0.8rem !important;
+    color: var(--wf-gray-500) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Modals */
+[data-wireframe] .modal-overlay {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-wireframe] .modal-body h2 {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .modal-body h2::before {
+    content: 'Dialog Title' !important;
+    font-size: 1.125rem !important;
+    font-weight: 700 !important;
+    color: var(--wf-gray-800) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+    display: block !important;
+    line-height: 1.3 !important;
+}
+
+[data-wireframe] .modal-close {
+    background: var(--wf-gray-200) !important;
+    border: none !important;
+}
+
+/* Form labels */
+[data-wireframe] .form-group label {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .form-group label::before {
+    content: 'Label' !important;
+    font-size: 0.8rem !important;
+    color: var(--wf-gray-500) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* Section badge → hide */
+[data-wireframe] .section-badge {
+    display: none !important;
+}
+
+/* Hero card features */
+[data-wireframe] .hero-card-features,
+[data-wireframe] .feature-item {
+    visibility: hidden !important;
+}
+
+/* Course meta → gray dots */
+[data-wireframe] .course-meta .dot {
+    font-size: 0 !important;
+    width: 4px !important;
+    height: 4px !important;
+    background: var(--wf-gray-300) !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+}
+
+/* Course price → gray bar */
+[data-wireframe] .course-price {
+    color: transparent !important;
+    background: linear-gradient(to right, var(--wf-gray-400) 0%, var(--wf-gray-400) 100%) no-repeat left center !important;
+    background-size: 50px 8px !important;
+}
+
+/* Auth pages */
+[data-wireframe] .auth-card,
+[data-wireframe] .auth-page {
+    background: var(--wf-white) !important;
+    border: 2px solid var(--wf-gray-300) !important;
+}
+
+/* Sidebar footer border */
+[data-wireframe] .sidebar-footer {
+    border-top: 2px solid var(--wf-gray-300) !important;
+}
+
+/* Steps arrow */
+[data-wireframe] .step-arrow {
+    color: var(--wf-gray-300) !important;
+}
+
+/* Filter items */
+[data-wireframe] .filter-option span {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .filter-option span::before {
+    content: 'Option' !important;
+    font-size: 0.8rem !important;
+    color: var(--wf-gray-500) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+[data-wireframe] .filters-header h3,
+[data-wireframe] .filter-group h4 {
+    font-size: 0 !important;
+}
+
+[data-wireframe] .filters-header h3::before {
+    content: 'Filters' !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    color: var(--wf-gray-600) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+[data-wireframe] .filter-group h4::before {
+    content: 'Filter' !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: var(--wf-gray-600) !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+}
+
+/* ==============================================
+   16. WATERMARK
+   ============================================== */
+[data-wireframe] body::after {
+    content: 'WIREFRAME' !important;
+    position: fixed !important;
+    bottom: 10px !important;
+    right: 10px !important;
+    background: var(--wf-gray-800) !important;
+    color: var(--wf-white) !important;
+    font-size: 0.6rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 2px !important;
+    padding: 3px 8px !important;
+    border-radius: 3px !important;
+    z-index: 99999 !important;
+    font-family: 'Balsamiq Sans', 'Comic Sans MS', cursive !important;
+    opacity: 0.4 !important;
+    pointer-events: none !important;
+}

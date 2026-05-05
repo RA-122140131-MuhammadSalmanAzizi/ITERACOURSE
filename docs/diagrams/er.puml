@@ -1,0 +1,109 @@
+@startuml
+skinparam linetype ortho
+skinparam shadowing false
+
+' Pengaturan bentuk entitas dan atribut
+skinparam rectangle {
+    BackgroundColor White
+    BorderColor Black
+}
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+}
+
+' --- ENTITAS USER & ROLE ---
+rectangle "USER" as User
+usecase "id_user (PK)" as u1
+usecase "nama" as u2
+usecase "email" as u3
+usecase "password" as u4
+usecase "status" as u5
+
+User -- u1
+User -- u2
+User -- u3
+User -- u4
+User -- u5
+
+rectangle "ROLE" as Role
+usecase "id_role (PK)" as r1
+usecase "nama_role" as r2
+
+Role -- r1
+Role -- r2
+
+' --- SUBTYPE (IS-A / SPECIALIZATION) ---
+' Deklarasi dulu sebelum digunakan
+rectangle "ADMIN" as Admin
+rectangle "DOSEN" as Dosen
+rectangle "CUSTOMER" as Customer
+
+' Gunakan rectangle berlabel "ISA" karena diamond = relasi many-to-many (semantik salah)
+rectangle "ISA" as isa #LightYellow
+
+User -- isa
+isa -- Admin
+isa -- Dosen
+isa -- Customer
+
+' --- ENTITAS COURSE ---
+rectangle "COURSE" as Course
+usecase "id_course (PK)" as c1
+usecase "nama_course" as c2
+usecase "kategori" as c3
+usecase "level" as c4
+usecase "harga" as c5
+usecase "rating" as c6
+usecase "tgl_buat" as c7
+
+Course -- c1
+Course -- c2
+Course -- c3
+Course -- c4
+Course -- c5
+Course -- c6
+Course -- c7
+
+' --- ENTITAS LAINNYA ---
+rectangle "CONTENT" as Content
+usecase "id_content (PK)" as ct1
+usecase "judul_content" as ct2
+usecase "tipe" as ct3
+Content -- ct1
+Content -- ct2
+Content -- ct3
+
+rectangle "QUIZ" as Quiz
+usecase "id_quiz (PK)" as q1
+usecase "judul_quiz" as q2
+Quiz -- q1
+Quiz -- q2
+
+rectangle "REVIEW" as Review
+usecase "id_review (PK)" as rv1
+usecase "rating" as rv2
+usecase "komentar" as rv3
+Review -- rv1
+Review -- rv2
+Review -- rv3
+
+rectangle "APPROVAL" as Approval
+usecase "id_approval (PK)" as ap1
+usecase "status" as ap2
+usecase "catatan" as ap3
+Approval -- ap1
+Approval -- ap2
+Approval -- ap3
+
+' --- RELASI & KARDINALITAS ---
+Role "1" -- "0..*" User : Mempunyai Peran
+Dosen "1" -- "0..*" Course : Membuat
+Course "1" -- "0..*" Content : Berisi Konten
+Course "1" -- "0..*" Quiz : Berisi Kuis
+Customer "1" -- "0..*" Review : Memberi
+Course "1" -- "0..*" Review : Menerima
+Course "1" -- "0..1" Approval : Melalui Proses
+Admin "1" -- "0..*" Approval : Memvalidasi
+
+@enduml

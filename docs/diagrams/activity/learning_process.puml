@@ -5,7 +5,7 @@ skinparam backgroundColor #FEFEFE
 skinparam ActivityBorderColor #9E9E9E
 skinparam ArrowColor #555555
 
-|Pelanggan|
+|Customer|
 start
 :Buka halaman
 belajar kelas; <<#FFF9C4>>
@@ -32,7 +32,7 @@ ujian; <<#FFFFFF>>
         :Cek kelulusan
 (nilai >= 80); <<#FFFFFF>>
 
-        |Pelanggan|
+        |Customer|
         if (Lulus?) then (Ya)
             :Tampilkan pesan
 berhasil; <<#FFF9C4>>

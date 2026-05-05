@@ -4,18 +4,25 @@ import {
     Play, Star, Users, Clock, BookOpen, Award,
     CheckCircle, ChevronDown, ChevronUp, Share2,
     Heart, ArrowLeft, Globe, PlayCircle, FileText,
-    ExternalLink, ClipboardCheck
+    ExternalLink, ClipboardCheck, Loader
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { useAuth } from '../../App';
-import { courses, reviews, getContentCounts, getAllContents } from '../../data/courses';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import './CourseDetailPage.css';
 
 const CourseDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user, enrolledCourses, enrollCourse, wishlist, addToWishlist, removeFromWishlist } = useAuth();
+    const { profile } = useAuth();
+    const [course, setCourse] = useState(null);
+    const [chapters, setChapters] = useState([]);
+    const [reviews, setReviews] = useState([]);
+    const [isEnrolled, setIsEnrolled] = useState(false);
+    const [isInWishlist, setIsInWishlist] = useState(false);
+    const [wishlistId, setWishlistId] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [expandedChapters, setExpandedChapters] = useState([0]);
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [reviewText, setReviewText] = useState('');
@@ -24,77 +31,135 @@ const CourseDetailPage = () => {
 
     useEffect(() => {
         window.scrollTo(0, 0);
-    }, []);
+        if (id) loadCourse();
+    }, [id]);
 
-    const course = courses.find(c => c.id === parseInt(id));
-    const isEnrolled = enrolledCourses?.includes(course?.id);
-    const isInWishlist = wishlist?.includes(course?.id);
-    const courseReviews = reviews.filter(r => r.courseId === parseInt(id) && r.status === 'approved');
+    useEffect(() => {
+        if (profile && course) {
+            checkEnrollment();
+            checkWishlist();
+        }
+    }, [profile, course]);
 
-    const handleToggleWishlist = () => {
-        if (!user) {
+    const loadCourse = async () => {
+        setLoading(true);
+        try {
+            const { data: courseData, error } = await supabase
+                .from('courses')
+                .select('*, instructor:profiles!courses_instructor_id_fkey(id, full_name, avatar_url, email), category:categories(name)')
+                .eq('id', id)
+                .single();
+
+            if (error || !courseData) {
+                setCourse(null);
+                setLoading(false);
+                return;
+            }
+            setCourse(courseData);
+
+            // Fetch chapters with contents
+            const { data: chaptersData } = await supabase
+                .from('chapters')
+                .select('*, contents(*)')
+                .eq('course_id', id)
+                .order('sort_order');
+            setChapters(chaptersData || []);
+
+            // Fetch approved reviews
+            const { data: reviewsData } = await supabase
+                .from('reviews')
+                .select('*, user:profiles!reviews_user_id_fkey(full_name, avatar_url)')
+                .eq('course_id', id)
+                .eq('status', 'approved')
+                .order('created_at', { ascending: false });
+            setReviews(reviewsData || []);
+        } catch (err) {
+            console.error('Error loading course:', err);
+        }
+        setLoading(false);
+    };
+
+    const checkEnrollment = async () => {
+        const { data } = await supabase
+            .from('enrollments')
+            .select('id')
+            .eq('user_id', profile.id)
+            .eq('course_id', id)
+            .maybeSingle();
+        setIsEnrolled(!!data);
+    };
+
+    const checkWishlist = async () => {
+        const { data } = await supabase
+            .from('wishlists')
+            .select('id')
+            .eq('user_id', profile.id)
+            .eq('course_id', id)
+            .maybeSingle();
+        setIsInWishlist(!!data);
+        setWishlistId(data?.id || null);
+    };
+
+    const handleEnroll = async () => {
+        if (!profile) {
             navigate('/login');
             return;
         }
-
-        // Prevent non-customers (dosen/admin) from using wishlist
-        if (user.role !== 'customer') {
+        if (profile.role !== 'customer') {
+            alert('Fitur Enrollment hanya tersedia untuk Siswa (Customer). Anda masuk sebagai ' + profile.role);
             return;
         }
-
-        if (isInWishlist) {
-            removeFromWishlist(course.id);
-        } else {
-            addToWishlist(course.id);
+        try {
+            await supabase.from('enrollments').insert({
+                user_id: profile.id,
+                course_id: id,
+            });
+            setIsEnrolled(true);
+            navigate(`/watch/${id}`);
+        } catch (err) {
+            console.error('Enroll error:', err);
         }
     };
 
-    if (!course) {
-        return (
-            <div className="course-detail-page">
-                <Navbar />
-                <div className="not-found">
-                    <h2>Course not found</h2>
-                    <Link to="/courses" className="btn btn-primary">Browse Courses</Link>
-                </div>
-                <Footer />
-            </div>
-        );
-    }
+    const handleToggleWishlist = async () => {
+        if (!profile) { navigate('/login'); return; }
+        if (profile.role !== 'customer') return;
 
-    const formatNumber = (num) => {
-        // ...
-        // ... (skipping unchanged lines)
-        // ...
-        <div className="sidebar-actions">
-            <button
-                className={`btn w - full ${isInWishlist ? 'btn-primary' : 'btn-secondary'} `}
-                onClick={handleToggleWishlist}
-                disabled={user && user.role !== 'customer'}
-                title={user && user.role !== 'customer' ? "Only students can use wishlist" : ""}
-                style={user && user.role !== 'customer' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-            >
-                <Heart size={18} fill={isInWishlist ? "currentColor" : "none"} />
-                {isInWishlist ? 'Wishlisted' : 'Add to Wishlist'}
-            </button>
-            <button className="btn btn-secondary w-full">
-                <Share2 size={18} />
-                Share
-            </button>
-        </div>
-        if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'K';
+        try {
+            if (isInWishlist && wishlistId) {
+                await supabase.from('wishlists').delete().eq('id', wishlistId);
+                setIsInWishlist(false);
+                setWishlistId(null);
+            } else {
+                const { data } = await supabase.from('wishlists').insert({
+                    user_id: profile.id,
+                    course_id: id,
+                }).select().single();
+                setIsInWishlist(true);
+                setWishlistId(data?.id);
+            }
+        } catch (err) {
+            console.error('Wishlist error:', err);
         }
-        return num;
     };
 
-    const formatPrice = (price) => {
-        if (price === 0) return 'Free';
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(price);
+    const handleSubmitReview = async (e) => {
+        e.preventDefault();
+        if (!profile) return;
+        try {
+            await supabase.from('reviews').insert({
+                user_id: profile.id,
+                course_id: id,
+                rating: reviewRating,
+                comment: reviewText,
+            });
+            setReviewSubmitted(true);
+            setShowReviewForm(false);
+            setReviewText('');
+            setTimeout(() => setReviewSubmitted(false), 5000);
+        } catch (err) {
+            console.error('Review error:', err);
+        }
     };
 
     const toggleChapter = (index) => {
@@ -105,27 +170,40 @@ const CourseDetailPage = () => {
         }
     };
 
-    const handleEnroll = () => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-        enrollCourse(course.id);
+    const formatPrice = (price) => {
+        if (!price || price === 0) return 'Free';
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
     };
 
-    const handleStartWatching = () => {
-        navigate(`/watch/${course.id}`);
-    };
+    // Loading state
+    if (loading) {
+        return (
+            <div className="course-detail-page">
+                <Navbar />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+                    <Loader size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary-500)' }} />
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
-    const handleSubmitReview = (e) => {
-        e.preventDefault();
-        // In real app, this would send to backend
-        setReviewSubmitted(true);
-        setShowReviewForm(false);
-        setTimeout(() => setReviewSubmitted(false), 5000);
-    };
+    if (!course) {
+        return (
+            <div className="course-detail-page">
+                <Navbar />
+                <div className="not-found">
+                    <h2>Kursus tidak ditemukan</h2>
+                    <Link to="/courses" className="btn btn-primary">Jelajahi Kursus</Link>
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
-    const totalContents = course.chapters?.reduce((acc, ch) => acc + (ch.contents?.length || 0), 0) || 0;
+    const totalContents = chapters.reduce((acc, ch) => acc + (ch.contents?.length || 0), 0);
+    const videoCount = chapters.reduce((acc, ch) => acc + (ch.contents?.filter(c => c.type === 'video').length || 0), 0);
+    const quizCount = chapters.reduce((acc, ch) => acc + (ch.contents?.filter(c => c.type === 'exercise').length || 0), 0);
 
     return (
         <div className="course-detail-page">
@@ -138,11 +216,11 @@ const CourseDetailPage = () => {
                         <div className="course-header-content">
                             <Link to="/courses" className="back-link">
                                 <ArrowLeft size={18} />
-                                Back to Courses
+                                Kembali
                             </Link>
 
                             <div className="course-badges">
-                                {course.isFree ? (
+                                {!course.price ? (
                                     <span className="badge badge-free">Free</span>
                                 ) : (
                                     <span className="badge badge-premium">Premium</span>
@@ -156,58 +234,61 @@ const CourseDetailPage = () => {
                             <div className="course-meta-row">
                                 <div className="meta-item">
                                     <Star size={16} fill="#eab308" color="#eab308" />
-                                    <span className="rating-value">{course.rating}</span>
-                                    <span className="rating-count">({formatNumber(course.reviews)} reviews)</span>
+                                    <span className="rating-value">{course.avg_rating?.toFixed(1) || '-'}</span>
+                                    <span className="rating-count">({reviews.length} reviews)</span>
                                 </div>
                                 <div className="meta-item">
-                                    <Users size={16} />
-                                    <span>{formatNumber(course.students)} students</span>
-                                </div>
-                                <div className="meta-item">
-                                    <Globe size={16} />
-                                    <span>English</span>
+                                    <BookOpen size={16} />
+                                    <span>{totalContents} materi</span>
                                 </div>
                                 <div className="meta-item">
                                     <Clock size={16} />
-                                    <span>Last updated {course.lastUpdated}</span>
+                                    <span>{course.level}</span>
                                 </div>
                             </div>
 
                             <div className="instructor-row">
-                                <div className="instructor-avatar">{course.instructorAvatar}</div>
+                                <div className="instructor-avatar" style={course.instructor?.avatar_url ? {
+                                    backgroundImage: `url(${course.instructor.avatar_url})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    color: 'transparent',
+                                } : {}}>
+                                    {!course.instructor?.avatar_url && (course.instructor?.full_name || 'D').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </div>
                                 <div>
-                                    <p className="instructor-label">Created by</p>
-                                    <p className="instructor-name">{course.instructor}</p>
+                                    <p className="instructor-label">Dibuat oleh</p>
+                                    <p className="instructor-name">{course.instructor?.full_name || 'Instructor'}</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Sidebar moved to Header */}
+                        {/* Sidebar */}
                         <aside className="course-sidebar">
                             <div className="sidebar-card">
                                 <div className="preview-video">
-                                    <img src={course.thumbnail} alt={course.title} />
-                                    <button className="preview-play">
-                                        <Play size={24} fill="white" />
-                                    </button>
+                                    {course.thumbnail_url ? (
+                                        <img src={course.thumbnail_url} alt={course.title} />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '200px', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <BookOpen size={48} color="white" />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="sidebar-content">
                                     <div className="price-row">
                                         <span className="price">{formatPrice(course.price)}</span>
-                                        {!course.isFree && (
-                                            <span className="original-price">Rp {(course.price * 1.5).toLocaleString()}</span>
-                                        )}
                                     </div>
 
                                     {isEnrolled ? (
-                                        <button className="btn btn-primary btn-lg w-full" onClick={handleStartWatching}>
+                                        <button className="btn btn-primary btn-lg w-full" onClick={() => navigate(`/watch/${course.id}`)}>
                                             <Play size={20} />
-                                            Continue Learning
+                                            Lanjutkan Belajar
                                         </button>
                                     ) : (
                                         <button className="btn btn-primary btn-lg w-full" onClick={handleEnroll}>
-                                            {course.isFree ? 'Enroll for Free' : 'Enroll Now'}
+                                            {!course.price ? 'Daftar Gratis' : 'Daftar Sekarang'}
                                         </button>
                                     )}
 
@@ -215,20 +296,16 @@ const CourseDetailPage = () => {
                                         <button
                                             className={`btn w-full ${isInWishlist ? 'btn-primary' : 'btn-secondary'}`}
                                             onClick={handleToggleWishlist}
-                                            disabled={user && user.role !== 'customer'}
-                                            title={user && user.role !== 'customer' ? "Only students can use wishlist" : ""}
-                                            style={user && user.role !== 'customer' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                            disabled={profile && profile.role !== 'customer'}
                                         >
                                             <Heart size={18} fill={isInWishlist ? "currentColor" : "none"} />
-                                            {isInWishlist ? 'Wishlisted' : 'Add to Wishlist'}
+                                            {isInWishlist ? 'Wishlisted' : 'Tambah Wishlist'}
                                         </button>
-                                        <button className="btn btn-secondary w-full">
+                                        <button className="btn btn-secondary w-full" onClick={() => navigator.clipboard?.writeText(window.location.href)}>
                                             <Share2 size={18} />
-                                            Share
+                                            Bagikan
                                         </button>
                                     </div>
-
-
                                 </div>
                             </div>
                         </aside>
@@ -241,76 +318,47 @@ const CourseDetailPage = () => {
                     <div className="course-layout" style={{ display: 'block' }}>
                         {/* Course Content */}
                         <section className="content-section">
-                            <h2>Course Content</h2>
+                            <h2>Konten Kursus</h2>
                             <div className="content-summary">
-                                <span>{course.chapters?.length || 0} sections</span>
+                                <span>{chapters.length} bab</span>
                                 <span>•</span>
-                                <span>{getAllContents(course).length} items</span>
-                                <span>•</span>
-                                <span>{course.duration} total length</span>
+                                <span>{totalContents} materi</span>
                             </div>
 
-                            {/* Content Type Summary */}
-                            {(() => {
-                                const counts = getContentCounts(course);
-                                return (
-                                    <div className="content-types-summary">
-                                        <div className="content-type-item video">
-                                            <PlayCircle size={16} />
-                                            <span>{counts.videos} Videos</span>
-                                        </div>
-                                        {counts.pdfs > 0 && (
-                                            <div className="content-type-item pdf">
-                                                <FileText size={16} />
-                                                <span>{counts.pdfs} PDFs</span>
-                                            </div>
-                                        )}
-                                        {counts.links > 0 && (
-                                            <div className="content-type-item link">
-                                                <ExternalLink size={16} />
-                                                <span>{counts.links} Links</span>
-                                            </div>
-                                        )}
-                                        <div className="content-type-item exercise">
-                                            <ClipboardCheck size={16} />
-                                            <span>{counts.exercises} Quizzes</span>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
+                            <div className="content-types-summary">
+                                <div className="content-type-item video">
+                                    <PlayCircle size={16} />
+                                    <span>{videoCount} Video</span>
+                                </div>
+                                <div className="content-type-item exercise">
+                                    <ClipboardCheck size={16} />
+                                    <span>{quizCount} Quiz</span>
+                                </div>
+                            </div>
 
                             <div className="passing-score-notice">
                                 <ClipboardCheck size={18} />
-                                <span>Pass all quizzes with ≥80% to complete the course and earn certificate</span>
+                                <span>Lulus semua quiz dengan ≥80% untuk mendapatkan sertifikat</span>
                             </div>
 
                             <div className="chapters-list">
-                                {course.chapters?.map((chapter, index) => (
-                                    <div key={index} className="chapter-group">
-                                        <button
-                                            className="chapter-title"
-                                            onClick={() => toggleChapter(index)}
-                                        >
+                                {chapters.map((chapter, index) => (
+                                    <div key={chapter.id} className="chapter-group">
+                                        <button className="chapter-title" onClick={() => toggleChapter(index)}>
                                             <span>{chapter.title}</span>
                                             <div className="chapter-right-side">
-                                                <span className="chapter-meta">
-                                                    {chapter.contents?.length || 0} items
-                                                </span>
-                                                {expandedChapters.includes(index) ? (
-                                                    <ChevronUp size={16} />
-                                                ) : (
-                                                    <ChevronDown size={16} />
-                                                )}
+                                                <span className="chapter-meta">{chapter.contents?.length || 0} materi</span>
+                                                {expandedChapters.includes(index) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                             </div>
                                         </button>
 
                                         {expandedChapters.includes(index) && (
                                             <div className="contents-list">
-                                                {chapter.contents?.map((content, contentIndex) => (
+                                                {chapter.contents?.sort((a, b) => a.sort_order - b.sort_order).map((content) => (
                                                     <div
-                                                        key={contentIndex}
+                                                        key={content.id}
                                                         className={`content-item ${content.type}`}
-                                                        onClick={() => isEnrolled && handleStartWatching()}
+                                                        onClick={() => isEnrolled && navigate(`/watch/${course.id}`)}
                                                         style={{ cursor: isEnrolled ? 'pointer' : 'default' }}
                                                     >
                                                         <div className="content-icon">
@@ -321,9 +369,7 @@ const CourseDetailPage = () => {
                                                         </div>
                                                         <div className="content-details">
                                                             <span className="content-title">{content.title}</span>
-                                                            <span className="content-duration">
-                                                                {content.duration || content.fileSize || ''}
-                                                            </span>
+                                                            <span className="content-duration">{content.duration || ''}</span>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -337,13 +383,10 @@ const CourseDetailPage = () => {
                         {/* Reviews */}
                         <section className="content-section">
                             <div className="reviews-header">
-                                <h2>Reviews</h2>
-                                {user && isEnrolled && !showReviewForm && (
-                                    <button
-                                        className="btn btn-outline btn-sm"
-                                        onClick={() => setShowReviewForm(true)}
-                                    >
-                                        Write a Review
+                                <h2>Review</h2>
+                                {profile && isEnrolled && !showReviewForm && (
+                                    <button className="btn btn-outline btn-sm" onClick={() => setShowReviewForm(true)}>
+                                        Tulis Review
                                     </button>
                                 )}
                             </div>
@@ -351,70 +394,49 @@ const CourseDetailPage = () => {
                             {reviewSubmitted && (
                                 <div className="review-success">
                                     <CheckCircle size={20} />
-                                    <span>Thank you! Your review has been submitted for approval.</span>
+                                    <span>Terima kasih! Review Anda telah dikirim untuk ditinjau.</span>
                                 </div>
                             )}
 
                             {showReviewForm && (
                                 <form className="review-form" onSubmit={handleSubmitReview}>
                                     <div className="rating-input">
-                                        <label>Your Rating</label>
+                                        <label>Rating Anda</label>
                                         <div className="stars-input">
                                             {[1, 2, 3, 4, 5].map(star => (
-                                                <button
-                                                    type="button"
-                                                    key={star}
-                                                    className={`star - btn ${star <= reviewRating ? 'active' : ''} `}
-                                                    onClick={() => setReviewRating(star)}
-                                                >
+                                                <button type="button" key={star} className={`star-btn ${star <= reviewRating ? 'active' : ''}`} onClick={() => setReviewRating(star)}>
                                                     <Star size={24} fill={star <= reviewRating ? '#eab308' : 'none'} color="#eab308" />
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="form-group">
-                                        <label>Your Review</label>
-                                        <textarea
-                                            className="input"
-                                            rows={4}
-                                            placeholder="Share your experience with this course..."
-                                            value={reviewText}
-                                            onChange={(e) => setReviewText(e.target.value)}
-                                            required
-                                        />
+                                        <label>Review Anda</label>
+                                        <textarea className="input" rows={4} placeholder="Bagikan pengalaman Anda..."
+                                            value={reviewText} onChange={(e) => setReviewText(e.target.value)} required />
                                     </div>
                                     <div className="review-form-actions">
-                                        <button type="button" className="btn btn-secondary" onClick={() => setShowReviewForm(false)}>
-                                            Cancel
-                                        </button>
-                                        <button type="submit" className="btn btn-primary">
-                                            Submit Review
-                                        </button>
+                                        <button type="button" className="btn btn-secondary" onClick={() => setShowReviewForm(false)}>Batal</button>
+                                        <button type="submit" className="btn btn-primary">Kirim Review</button>
                                     </div>
-                                    <p className="review-note">Note: Reviews are subject to approval before being displayed.</p>
                                 </form>
                             )}
 
                             <div className="reviews-list">
-                                {courseReviews.length > 0 ? (
-                                    courseReviews.map(review => (
+                                {reviews.length > 0 ? (
+                                    reviews.map(review => (
                                         <div key={review.id} className="review-card">
                                             <div className="review-header">
                                                 <div className="reviewer-avatar">
-                                                    {review.userName.split(' ').map(n => n[0]).join('')}
+                                                    {(review.user?.full_name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2)}
                                                 </div>
                                                 <div>
-                                                    <p className="reviewer-name">{review.userName}</p>
+                                                    <p className="reviewer-name">{review.user?.full_name}</p>
                                                     <div className="review-rating">
                                                         {[...Array(5)].map((_, i) => (
-                                                            <Star
-                                                                key={i}
-                                                                size={14}
-                                                                fill={i < review.rating ? '#eab308' : 'none'}
-                                                                color="#eab308"
-                                                            />
+                                                            <Star key={i} size={14} fill={i < review.rating ? '#eab308' : 'none'} color="#eab308" />
                                                         ))}
-                                                        <span className="review-date">{review.createdAt}</span>
+                                                        <span className="review-date">{new Date(review.created_at).toLocaleDateString('id-ID')}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -422,19 +444,17 @@ const CourseDetailPage = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="no-reviews">No reviews yet. Be the first to review!</p>
+                                    <p className="no-reviews">Belum ada review. Jadilah yang pertama!</p>
                                 )}
                             </div>
                         </section>
-                        {/* Sidebar moved to header */}
                     </div>
                 </div>
-            </main >
+            </main>
 
             <Footer />
-        </div >
+        </div>
     );
 };
 
 export default CourseDetailPage;
-

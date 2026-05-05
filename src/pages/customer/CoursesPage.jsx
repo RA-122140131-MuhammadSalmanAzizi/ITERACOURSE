@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Search, Filter, Star, Users, Clock,
+    Search, Filter, Star, Users, Clock, BookOpen,
     ChevronDown, Grid, List, X, GraduationCap
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { courses, categories } from '../../data/courses';
+import { supabase } from '../../lib/supabase';
 import './CoursesPage.css';
 
 const CoursesPage = () => {
@@ -17,17 +17,42 @@ const CoursesPage = () => {
     const [sortBy, setSortBy] = useState('popular');
     const [viewMode, setViewMode] = useState('grid');
     const [showFilters, setShowFilters] = useState(false);
+    const [courses, setCourses] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const levels = ['All Levels', 'Beginner', 'Intermediate', 'Advanced'];
 
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            const [{ data: coursesData }, { data: catsData }] = await Promise.all([
+                supabase
+                    .from('courses')
+                    .select('*, instructor:profiles!courses_instructor_id_fkey(full_name), category:categories(name)')
+                    .eq('status', 'published')
+                    .order('created_at', { ascending: false }),
+                supabase.from('categories').select('*').order('name'),
+            ]);
+            setCourses(coursesData || []);
+            setCategories(catsData || []);
+        } catch (err) {
+            console.error(err);
+        }
+        setLoading(false);
+    };
+
     const filteredCourses = courses.filter(course => {
         const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            course.description.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
+            (course.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === 'all' || course.category?.name === selectedCategory;
         const matchesLevel = selectedLevel === 'all' || course.level === selectedLevel;
         const matchesPrice = priceFilter === 'all' ||
-            (priceFilter === 'free' && course.isFree) ||
-            (priceFilter === 'paid' && !course.isFree);
+            (priceFilter === 'free' && !course.price) ||
+            (priceFilter === 'paid' && course.price > 0);
 
         return matchesSearch && matchesCategory && matchesLevel && matchesPrice;
     });
@@ -35,15 +60,15 @@ const CoursesPage = () => {
     const sortedCourses = [...filteredCourses].sort((a, b) => {
         switch (sortBy) {
             case 'popular':
-                return b.students - a.students;
+                return (b.enrollment_count || 0) - (a.enrollment_count || 0);
             case 'rating':
-                return b.rating - a.rating;
+                return (b.avg_rating || 0) - (a.avg_rating || 0);
             case 'newest':
-                return new Date(b.lastUpdated) - new Date(a.lastUpdated);
+                return new Date(b.created_at) - new Date(a.created_at);
             case 'price-low':
-                return a.price - b.price;
+                return (a.price || 0) - (b.price || 0);
             case 'price-high':
-                return b.price - a.price;
+                return (b.price || 0) - (a.price || 0);
             default:
                 return 0;
         }
@@ -268,16 +293,22 @@ const CoursesPage = () => {
                                             style={{ animationDelay: `${index * 0.05}s` }}
                                         >
                                             <div className="course-image">
-                                                <img src={course.thumbnail} alt={course.title} />
+                                                {course.thumbnail_url ? (
+                                                    <img src={course.thumbnail_url} alt={course.title} />
+                                                ) : (
+                                                    <div style={{ width: '100%', height: '100%', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <BookOpen size={40} color="white" />
+                                                    </div>
+                                                )}
                                                 <div className="course-badges">
                                                     <span className="badge badge-level">{course.level}</span>
-                                                    <span className={`badge ${course.isFree ? 'badge-free' : 'badge-premium'}`}>
-                                                        {course.isFree ? 'Free' : 'Premium'}
+                                                    <span className={`badge ${!course.price ? 'badge-free' : 'badge-premium'}`}>
+                                                        {!course.price ? 'Free' : 'Premium'}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div className="course-content">
-                                                <div className="course-category">{course.category}</div>
+                                                <div className="course-category">{course.category?.name || '-'}</div>
                                                 <h3 className="course-title">{course.title}</h3>
 
                                                 {viewMode === 'list' && (
@@ -288,22 +319,20 @@ const CoursesPage = () => {
                                                     <div className="instructor-icon">
                                                         <GraduationCap size={16} />
                                                     </div>
-                                                    <span>{course.instructor}</span>
+                                                    <span>{course.instructor?.full_name || 'Instructor'}</span>
                                                 </div>
 
-                                                <div className="course-meta">
-                                                    <div className="rating">
-                                                        <Star size={14} fill="#eab308" color="#eab308" />
-                                                        <span>{course.rating}</span>
+                                                    <div className="course-meta">
+                                                        <div className="rating">
+                                                            <Star size={14} fill="#eab308" color="#eab308" />
+                                                            <span>{course.avg_rating?.toFixed(1) || '-'}</span>
+                                                        </div>
+                                                        <span className="dot">•</span>
+                                                        <span>{course.level}</span>
                                                     </div>
-                                                    <span className="dot">•</span>
-                                                    <span>{course.lessons} lessons</span>
-                                                    <span className="dot">•</span>
-                                                    <span>{course.duration}</span>
-                                                </div>
 
                                                 <div className="course-footer">
-                                                    <p className="course-price">{formatPrice(course.price)}</p>
+                                                    <p className="course-price">{formatPrice(course.price || 0)}</p>
                                                 </div>
                                             </div>
                                         </Link>

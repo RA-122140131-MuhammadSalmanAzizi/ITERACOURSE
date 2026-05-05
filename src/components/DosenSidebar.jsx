@@ -1,14 +1,15 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-    BookOpen, Plus, Eye, LogOut, BarChart2, Sun, Moon
+    BookOpen, Plus, Eye, LogOut, BarChart2, Sun, Moon, Bell
 } from 'lucide-react';
-import { useAuth, useTheme } from '../App';
+import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import '../pages/dosen/DosenPages.css';
 
 const DosenSidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     const handleLogout = () => {
@@ -30,18 +31,23 @@ const DosenSidebar = () => {
                 <span>Instructor</span>
             </div>
 
-            <Link to="/profile" className="sidebar-profile">
-                <div className="profile-avatar">
-                    {user?.avatar || 'D'}
+            <Link to="/customer/profile" className="sidebar-profile">
+                <div className="profile-avatar" style={profile?.avatar_url ? {
+                    backgroundImage: `url(${profile.avatar_url})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    color: 'transparent',
+                } : {}}>
+                    {!profile?.avatar_url && (profile?.full_name || 'D').split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div className="profile-info">
                     <span
                         className="profile-name"
                         style={{
-                            fontSize: user?.name?.length > 20 ? '0.75rem' : user?.name?.length > 15 ? '0.8rem' : '0.875rem'
+                            fontSize: (profile?.full_name?.length || 0) > 20 ? '0.75rem' : (profile?.full_name?.length || 0) > 15 ? '0.8rem' : '0.875rem'
                         }}
                     >
-                        {user?.name || 'Lecturer'}
+                        {profile?.full_name || 'Lecturer'}
                     </span>
                     <span className="profile-role">Lecturer</span>
                 </div>
@@ -59,6 +65,10 @@ const DosenSidebar = () => {
                 <Link to="/dosen/upload" className={`nav-item ${isActive('/dosen/upload') ? 'active' : ''}`}>
                     <Plus size={20} />
                     Upload Course
+                </Link>
+                <Link to="/notifications" className={`nav-item ${isActive('/notifications') ? 'active' : ''}`}>
+                    <Bell size={20} />
+                    Notifikasi
                 </Link>
             </nav>
 
@@ -81,4 +91,3 @@ const DosenSidebar = () => {
 };
 
 export default DosenSidebar;
-

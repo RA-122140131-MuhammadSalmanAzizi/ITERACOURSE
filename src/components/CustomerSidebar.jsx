@@ -1,15 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard, BookOpen, User, MessageSquare,
+    LayoutDashboard, BookOpen, MessageSquare,
     Award, LogOut, Eye, Sun, Moon, ClipboardList, Heart, ShoppingBag
 } from 'lucide-react';
-import { useAuth, useTheme } from '../App';
+import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import '../pages/admin/AdminPages.css'; // Reuse admin styles for consistency
 
 const CustomerSidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     const handleLogout = () => {
@@ -33,17 +34,22 @@ const CustomerSidebar = () => {
                 </div>
 
                 <Link to="/customer/profile" className="sidebar-profile">
-                    <div className="profile-avatar">
-                        {user?.avatar || 'S'}
+                    <div className="profile-avatar" style={profile?.avatar_url ? {
+                        backgroundImage: `url(${profile.avatar_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        color: 'transparent',
+                    } : {}}>
+                        {!profile?.avatar_url && (profile?.full_name || 'S').split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                     <div className="profile-info">
                         <span
                             className="profile-name"
                             style={{
-                                fontSize: user?.name?.length > 20 ? '0.75rem' : user?.name?.length > 15 ? '0.8rem' : '0.875rem'
+                                fontSize: (profile?.full_name?.length || 0) > 20 ? '0.75rem' : (profile?.full_name?.length || 0) > 15 ? '0.8rem' : '0.875rem'
                             }}
                         >
-                            {user?.name || 'Student'}
+                            {profile?.full_name || 'Student'}
                         </span>
                         <span className="profile-role">Student</span>
                     </div>

@@ -1,23 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Users, TrendingUp, DollarSign, BookOpen, MessageSquare, Award, Settings, X, PlusCircle,
-    Star, User, Database
+    Users, BookOpen, DollarSign, Settings, X, PlusCircle,
+    Star, User, Database, Clock
 } from 'lucide-react';
-import { useAuth } from '../../App';
-import { stats } from '../../data/courses';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
+import * as dosenRequestService from '../../services/dosenRequestService';
 import AdminSidebar from '../../components/AdminSidebar';
 import './AdminPages.css';
 
 const AdminDashboard = () => {
-    const { user } = useAuth();
+    const { profile } = useAuth();
+    const [stats, setStats] = useState({ users: 0, courses: 0, dosen: 0, pendingRequests: 0 });
+    const [loading, setLoading] = useState(true);
     const [isEditingActions, setIsEditingActions] = useState(false);
     const [activeActions, setActiveActions] = useState([
         { id: 'data', label: 'Data Management', path: '/admin/data', icon: Database, visible: true },
         { id: 'reviews', label: 'Reviews', path: '/admin/reviews', icon: Star, visible: true },
         { id: 'settings', label: 'Course Settings', path: '/admin/settings', icon: Settings, visible: true },
-        { id: 'profile', label: 'My Profile', path: '/profile', icon: User, visible: false }
+        { id: 'users', label: 'Users', path: '/admin/users', icon: Users, visible: true },
     ]);
+
+    useEffect(() => {
+        loadStats();
+    }, []);
+
+    const loadStats = async () => {
+        try {
+            const [
+                { count: userCount },
+                { count: courseCount },
+                { count: dosenCount },
+                pendingCount,
+            ] = await Promise.all([
+                supabase.from('profiles').select('*', { count: 'exact', head: true }),
+                supabase.from('courses').select('*', { count: 'exact', head: true }),
+                supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'dosen'),
+                dosenRequestService.getPendingDosenRequestCount(),
+            ]);
+
+            setStats({
+                users: userCount || 0,
+                courses: courseCount || 0,
+                dosen: dosenCount || 0,
+                pendingRequests: pendingCount,
+            });
+        } catch (err) {
+            console.error(err);
+        }
+        setLoading(false);
+    };
 
     const toggleAction = (id) => {
         const action = activeActions.find(a => a.id === id);
@@ -34,17 +67,10 @@ const AdminDashboard = () => {
     };
 
     const dashboardStats = [
-        { label: 'Total Students', value: stats.totalStudents.toLocaleString(), icon: Users, color: 'primary', change: '+12%' },
-        { label: 'Total Courses', value: stats.totalCourses, icon: BookOpen, color: 'secondary', change: '+5%' },
-        { label: 'Instructors', value: stats.totalInstructors, icon: Users, color: 'warning', change: '+3%' },
-        { label: 'Revenue', value: 'Rp 125M', icon: DollarSign, color: 'success', change: '+18%' },
-    ];
-
-    const recentActivities = [
-        { type: 'user', text: 'New user registered: John Doe', time: '5 minutes ago' },
-        { type: 'course', text: 'New course published: React Advanced', time: '1 hour ago' },
-        { type: 'review', text: 'New review pending approval', time: '2 hours ago' },
-        { type: 'certificate', text: 'Certificate claimed by Jane Smith', time: '3 hours ago' },
+        { label: 'Total Users', value: stats.users, icon: Users, color: 'primary' },
+        { label: 'Total Kursus', value: stats.courses, icon: BookOpen, color: 'secondary' },
+        { label: 'Dosen', value: stats.dosen, icon: User, color: 'warning' },
+        { label: 'Pending Requests', value: stats.pendingRequests, icon: Clock, color: stats.pendingRequests > 0 ? 'success' : 'primary' },
     ];
 
     return (
@@ -55,11 +81,11 @@ const AdminDashboard = () => {
                 <header className="admin-header">
                     <div>
                         <h1>Dashboard Overview</h1>
-                        <p>Welcome back, {user?.name}!</p>
+                        <p>Selamat datang, {profile?.full_name}!</p>
                     </div>
                     <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <span className="date-display">
-                            {new Date().toLocaleDateString('en-US', {
+                            {new Date().toLocaleDateString('id-ID', {
                                 weekday: 'long',
                                 year: 'numeric',
                                 month: 'long',
@@ -76,33 +102,14 @@ const AdminDashboard = () => {
                                 <div className="stat-icon">
                                     <stat.icon size={24} />
                                 </div>
-                                <span className="stat-change positive">{stat.change}</span>
                             </div>
-                            <p className="stat-value">{stat.value}</p>
+                            <p className="stat-value">{loading ? '...' : stat.value}</p>
                             <p className="stat-label">{stat.label}</p>
                         </div>
                     ))}
                 </div>
 
                 <div className="dashboard-grid">
-                    {/* Recent Activity */}
-                    <section className="content-section">
-                        <div className="section-header">
-                            <h2>Recent Activity</h2>
-                        </div>
-                        <div className="activity-list">
-                            {recentActivities.map((activity, index) => (
-                                <div key={index} className="activity-item">
-                                    <div className={`activity-dot ${activity.type}`}></div>
-                                    <div className="activity-content">
-                                        <p>{activity.text}</p>
-                                        <span>{activity.time}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-
                     {/* Quick Actions */}
                     <section className="content-section">
                         <div className="section-header">
@@ -146,9 +153,6 @@ const AdminDashboard = () => {
                                         <span>{action.label}</span>
                                     </Link>
                                 ))}
-                                {activeActions.filter(a => a.visible).length === 0 && (
-                                    <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', width: '100%' }}>No quick actions pinned.</p>
-                                )}
                             </div>
                         )}
                     </section>
@@ -159,4 +163,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-

@@ -5,7 +5,7 @@ skinparam backgroundColor #FEFEFE
 skinparam ActivityBorderColor #9E9E9E
 skinparam ArrowColor #555555
 
-|Pengunjung|
+|Guest|
 start
 :Buka platform
 e-learning; <<#E8F5E9>>
@@ -43,10 +43,10 @@ Dashboard Admin; <<#FFFFFF>>
         if (Dosen?) then (Ya)
             :Arahkan ke
 Dashboard Dosen; <<#FFFFFF>>
-        else (Pelanggan)
+        else (Customer)
             :Arahkan ke
 Dashboard
-Pelanggan; <<#FFFFFF>>
+Customer; <<#FFFFFF>>
         endif
     endif
 else (Tidak)

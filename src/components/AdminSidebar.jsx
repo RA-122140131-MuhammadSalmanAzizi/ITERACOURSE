@@ -1,15 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard, Settings, Database, Star,
-    LogOut, Eye, Sun, Moon, HelpCircle
+    LayoutDashboard, Settings, Database, Star, Users,
+    LogOut, Eye, Sun, Moon, HelpCircle, Bell
 } from 'lucide-react';
-import { useAuth, useTheme } from '../App';
+import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import '../pages/admin/AdminPages.css';
 
 const AdminSidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     const handleLogout = () => {
@@ -31,18 +32,23 @@ const AdminSidebar = () => {
                 <span>Admin Panel</span>
             </div>
 
-            <Link to="/profile" className="sidebar-profile">
-                <div className="profile-avatar">
-                    {user?.avatar || 'A'}
+            <Link to="/customer/profile" className="sidebar-profile">
+                <div className="profile-avatar" style={profile?.avatar_url ? {
+                    backgroundImage: `url(${profile.avatar_url})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    color: 'transparent',
+                } : {}}>
+                    {!profile?.avatar_url && (profile?.full_name || 'A').split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div className="profile-info">
                     <span
                         className="profile-name"
                         style={{
-                            fontSize: user?.name?.length > 20 ? '0.75rem' : user?.name?.length > 15 ? '0.8rem' : '0.875rem'
+                            fontSize: (profile?.full_name?.length || 0) > 20 ? '0.75rem' : (profile?.full_name?.length || 0) > 15 ? '0.8rem' : '0.875rem'
                         }}
                     >
-                        {user?.name || 'Admin'}
+                        {profile?.full_name || 'Admin'}
                     </span>
                     <span className="profile-role">Administrator</span>
                 </div>
@@ -59,11 +65,19 @@ const AdminSidebar = () => {
                 </Link>
                 <Link to="/admin/data" className={`nav-item ${isActive('/admin/data') ? 'active' : ''}`}>
                     <Database size={20} />
-                    Data
+                    Data Courses
                 </Link>
                 <Link to="/admin/reviews" className={`nav-item ${isActive('/admin/reviews') ? 'active' : ''}`}>
                     <Star size={20} />
                     Reviews
+                </Link>
+                <Link to="/admin/users" className={`nav-item ${isActive('/admin/users') ? 'active' : ''}`}>
+                    <Users size={20} />
+                    Users
+                </Link>
+                <Link to="/notifications" className={`nav-item ${isActive('/notifications') ? 'active' : ''}`}>
+                    <Bell size={20} />
+                    Notifikasi
                 </Link>
                 <Link to="/admin/faq" className={`nav-item ${isActive('/admin/faq') ? 'active' : ''}`}>
                     <HelpCircle size={20} />

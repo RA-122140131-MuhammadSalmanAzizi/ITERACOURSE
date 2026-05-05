@@ -5,7 +5,7 @@ skinparam backgroundColor #FEFEFE
 skinparam ActivityBorderColor #9E9E9E
 skinparam ArrowColor #555555
 
-|Pelanggan|
+|Customer|
 start
 :Telusuri katalog
 kelas; <<#FFF9C4>>
@@ -37,12 +37,12 @@ Gratis; <<#FFF9C4>>
 
     |Sistem|
     :Tambahkan
-pelanggan ke
+customer ke
 daftar peserta; <<#FFFFFF>>
     :Buat rekaman
 progres belajar; <<#FFFFFF>>
 
-    |Pelanggan|
+    |Customer|
     :Masuk ke halaman
 belajar; <<#FFF9C4>>
 endif

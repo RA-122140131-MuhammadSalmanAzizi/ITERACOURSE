@@ -1,33 +1,87 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    BookOpen, Award, Clock, CheckCircle
+    BookOpen, Award, Clock, TrendingUp, Heart, Star
 } from 'lucide-react';
-import { useAuth } from '../../App';
-import { courses } from '../../data/courses';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import CustomerSidebar from '../../components/CustomerSidebar';
 import '../admin/AdminPages.css';
 
 const CustomerDashboard = () => {
-    const { user, enrolledCourses, completedCourses, certificates } = useAuth();
+    const { profile } = useAuth();
+    const [stats, setStats] = useState({
+        enrolledCourses: 0,
+        completedCourses: 0,
+        certificates: 0,
+        wishlistCount: 0,
+    });
+    const [recentCourses, setRecentCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const stats = [
-        { label: 'Enrolled Courses', value: enrolledCourses.length, icon: BookOpen, color: 'primary' },
-        { label: 'Completed Courses', value: completedCourses.length, icon: CheckCircle, color: 'success' },
-        { label: 'Certificates', value: certificates.length, icon: Award, color: 'warning' },
-        { label: 'Hours Learned', value: '12.5', icon: Clock, color: 'secondary' },
+    useEffect(() => {
+        if (profile) loadDashboardData();
+    }, [profile]);
+
+    const loadDashboardData = async () => {
+        setLoading(true);
+        try {
+            // Fetch enrolled courses count
+            const { count: enrolledCount } = await supabase
+                .from('enrollments')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id);
+
+            // Fetch completed courses count
+            const { count: completedCount } = await supabase
+                .from('enrollments')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id)
+                .eq('status', 'completed');
+
+            // Fetch certificates count
+            const { count: certCount } = await supabase
+                .from('certificates')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id);
+
+            // Fetch wishlist count
+            const { count: wishCount } = await supabase
+                .from('wishlists')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id);
+
+            // Fetch recent enrolled courses with course details
+            const { data: recentEnrollments } = await supabase
+                .from('enrollments')
+                .select(`
+                    *,
+                    course:courses(id, title, thumbnail_url, level, instructor:profiles!courses_instructor_id_fkey(full_name))
+                `)
+                .eq('user_id', profile.id)
+                .order('enrolled_at', { ascending: false })
+                .limit(4);
+
+            setStats({
+                enrolledCourses: enrolledCount || 0,
+                completedCourses: completedCount || 0,
+                certificates: certCount || 0,
+                wishlistCount: wishCount || 0,
+            });
+
+            setRecentCourses(recentEnrollments || []);
+        } catch (err) {
+            console.error('Dashboard load error:', err);
+        }
+        setLoading(false);
+    };
+
+    const dashboardStats = [
+        { label: 'Kursus Diikuti', value: stats.enrolledCourses, icon: BookOpen, color: 'primary' },
+        { label: 'Kursus Selesai', value: stats.completedCourses, icon: Award, color: 'success' },
+        { label: 'Sertifikat', value: stats.certificates, icon: Star, color: 'warning' },
+        { label: 'Wishlist', value: stats.wishlistCount, icon: Heart, color: 'secondary' },
     ];
-
-    const continueLearning = courses
-        .filter(c => enrolledCourses.includes(c.id))
-        .slice(0, 3)
-        .map(c => ({
-            id: c.id,
-            title: c.title,
-            subtitle: `${c.lessons} Lessons • ${c.duration}`,
-            progress: completedCourses.includes(c.id) ? 100 : 10,
-            image: c.thumbnail,
-            status: completedCourses.includes(c.id) ? 'COMPLETED' : 'IN PROGRESS'
-        }));
 
     return (
         <div className="admin-page">
@@ -36,12 +90,12 @@ const CustomerDashboard = () => {
             <main className="admin-main">
                 <header className="admin-header">
                     <div>
-                        <h1>My Dashboard</h1>
-                        <p>Welcome back, {user?.name}!</p>
+                        <h1>Dashboard</h1>
+                        <p>Selamat datang, {profile?.full_name}! 👋</p>
                     </div>
                     <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <span className="date-display">
-                            {new Date().toLocaleDateString('en-US', {
+                            {new Date().toLocaleDateString('id-ID', {
                                 weekday: 'long',
                                 year: 'numeric',
                                 month: 'long',
@@ -51,83 +105,114 @@ const CustomerDashboard = () => {
                     </div>
                 </header>
 
+                {/* Stats */}
                 <div className="stats-grid">
-                    {stats.map((stat, index) => (
+                    {dashboardStats.map((stat, index) => (
                         <div key={index} className={`stat-card ${stat.color}`}>
                             <div className="stat-header">
                                 <div className="stat-icon">
                                     <stat.icon size={24} />
                                 </div>
                             </div>
-                            <p className="stat-value">{stat.value}</p>
+                            <p className="stat-value">{loading ? '...' : stat.value}</p>
                             <p className="stat-label">{stat.label}</p>
                         </div>
                     ))}
                 </div>
 
-                <section className="content-section">
-                    <div className="section-header">
-                        <h2>Continue Learning</h2>
-                    </div>
-                    <div className="continue-learning-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {continueLearning.map((course, index) => (
-                            <div key={course.id} className="course-progress-card" style={{
-                                display: 'flex',
-                                gap: '1.5rem',
-                                alignItems: 'center',
-                                paddingBottom: index !== continueLearning.length - 1 ? '1.5rem' : 0,
-                                borderBottom: index !== continueLearning.length - 1 ? '1px solid var(--border-color)' : 'none'
-                            }}>
-                                <div className="course-thumb" style={{ width: '240px', height: '135px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-                                    <img
-                                        src={course.image}
-                                        alt={course.title}
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
-                                </div>
-                                <div className="course-info" style={{ flex: 1 }}>
-                                    <div style={{ marginBottom: '0.25rem' }}>
-                                        <span className={`status-badge active`} style={{ fontSize: '0.7rem' }}>{course.status}</span>
-                                    </div>
-                                    <h3 style={{ marginBottom: '0.5rem', fontSize: '1.25rem' }}>{course.title}</h3>
-                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem', fontSize: '0.9rem' }}>
-                                        {course.subtitle}
-                                    </p>
+                <div className="dashboard-grid">
+                    {/* Recent Courses */}
+                    <section className="content-section">
+                        <div className="section-header">
+                            <h2>Kursus Terakhir</h2>
+                            <Link to="/customer/courses" className="btn btn-outline btn-sm">Lihat Semua</Link>
+                        </div>
 
-                                    <div className="progress-container" style={{ maxWidth: '600px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                                            <span style={{ fontWeight: 500 }}>Progress</span>
-                                            <span style={{ color: course.progress === 100 ? '#22c55e' : 'var(--primary-500)', fontWeight: 600 }}>{course.progress}%</span>
-                                        </div>
-                                        <div className="progress-bar-bg" style={{ width: '100%', height: '8px', background: 'var(--bg-secondary)', borderRadius: '4px', overflow: 'hidden' }}>
-                                            <div className="progress-bar-fill" style={{ width: `${course.progress}%`, height: '100%', background: course.progress === 100 ? '#22c55e' : 'var(--primary-500)', borderRadius: '4px' }}></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                        {course.progress === 100 ? (
-                                            <>
-                                                <Link to={`/watch/${course.id}`} className="btn btn-outline" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    Open
-                                                </Link>
-                                                <Link to="/customer/certificates" className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    View Certificate
-                                                    <Award size={18} />
-                                                </Link>
-                                            </>
-                                        ) : (
-                                            <Link to={`/watch/${course.id}`} className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                Continue
-                                                <Clock size={18} />
-                                            </Link>
-                                        )}
-                                    </div>
-                                </div>
+                        {loading ? (
+                            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                                Memuat...
                             </div>
-                        ))}
-                    </div>
-                </section>
+                        ) : recentCourses.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '2rem' }}>
+                                <BookOpen size={48} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: '1rem' }} />
+                                <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>Anda belum mengikuti kursus</p>
+                                <Link to="/courses" className="btn btn-primary btn-sm">Jelajahi Kursus</Link>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+                                {recentCourses.map(enrollment => (
+                                    <Link
+                                        key={enrollment.id}
+                                        to={`/watch/${enrollment.course?.id}`}
+                                        style={{
+                                            background: 'var(--bg-primary)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '12px',
+                                            overflow: 'hidden',
+                                            textDecoration: 'none',
+                                            color: 'inherit',
+                                            transition: 'all 0.2s ease',
+                                        }}
+                                    >
+                                        <div style={{
+                                            height: '120px',
+                                            background: enrollment.course?.thumbnail_url
+                                                ? `url(${enrollment.course.thumbnail_url}) center/cover`
+                                                : 'var(--gradient-primary)',
+                                        }} />
+                                        <div style={{ padding: '0.75rem' }}>
+                                            <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                                                {enrollment.course?.title}
+                                            </h4>
+                                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                                {enrollment.course?.instructor?.full_name || 'Instructor'}
+                                            </p>
+                                            <div style={{
+                                                marginTop: '0.5rem',
+                                                height: '4px',
+                                                borderRadius: '2px',
+                                                background: 'var(--border-color)',
+                                                overflow: 'hidden',
+                                            }}>
+                                                <div style={{
+                                                    height: '100%',
+                                                    width: `${enrollment.progress || 0}%`,
+                                                    background: 'var(--primary-500)',
+                                                    borderRadius: '2px',
+                                                    transition: 'width 0.3s ease',
+                                                }} />
+                                            </div>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                {enrollment.progress || 0}% selesai
+                                            </span>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Quick Actions */}
+                    <section className="content-section">
+                        <div className="section-header">
+                            <h2>Aksi Cepat</h2>
+                        </div>
+                        <div className="quick-actions">
+                            <Link to="/courses" className="quick-action-btn">
+                                <BookOpen size={20} />
+                                <span>Jelajahi Kursus</span>
+                            </Link>
+                            <Link to="/customer/certificates" className="quick-action-btn">
+                                <Award size={20} />
+                                <span>Sertifikat</span>
+                            </Link>
+                            <Link to="/customer/wishlist" className="quick-action-btn">
+                                <Heart size={20} />
+                                <span>Wishlist</span>
+                            </Link>
+                        </div>
+                    </section>
+                </div>
             </main>
         </div>
     );

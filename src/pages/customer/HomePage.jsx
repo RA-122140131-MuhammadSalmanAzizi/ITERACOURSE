@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { courses, categories, stats } from '../../data/courses';
-import { useAuth } from '../../App';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import './HomePage.css';
 
 // Icon mapping for categories
@@ -65,12 +65,52 @@ const CountUp = ({ end, duration = 1500, formatter = (val) => val }) => {
 };
 
 const HomePage = () => {
-    const { certificates } = useAuth();
+    const { profile } = useAuth();
     const [certificateId, setCertificateId] = useState('');
     const [verifyResult, setVerifyResult] = useState(null);
     const [isVerifying, setIsVerifying] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
-    const popularCourses = courses.slice(0, 6);
+    const [popularCourses, setPopularCourses] = useState([]);
+    const [categoriesData, setCategoriesData] = useState([]);
+    const [siteStats, setSiteStats] = useState({ totalStudents: 0, totalCourses: 0, totalCertificates: 0 });
+
+    useEffect(() => {
+        loadHomeData();
+    }, []);
+
+    const loadHomeData = async () => {
+        try {
+            // Fetch published courses
+            const { data: coursesData } = await supabase
+                .from('courses')
+                .select('*, instructor:profiles!courses_instructor_id_fkey(full_name), category:categories(name)')
+                .eq('status', 'published')
+                .order('created_at', { ascending: false })
+                .limit(6);
+            setPopularCourses(coursesData || []);
+
+            // Fetch categories
+            const { data: cats } = await supabase
+                .from('categories')
+                .select('*')
+                .order('name');
+            setCategoriesData(cats || []);
+
+            // Fetch stats
+            const [{ count: userCount }, { count: courseCount }, { count: certCount }] = await Promise.all([
+                supabase.from('profiles').select('*', { count: 'exact', head: true }),
+                supabase.from('courses').select('*', { count: 'exact', head: true }).eq('status', 'published'),
+                supabase.from('certificates').select('*', { count: 'exact', head: true }),
+            ]);
+            setSiteStats({
+                totalStudents: userCount || 0,
+                totalCourses: courseCount || 0,
+                totalCertificates: certCount || 0,
+            });
+        } catch (err) {
+            console.error('Error loading home data:', err);
+        }
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -115,17 +155,31 @@ const HomePage = () => {
         });
     };
 
-    const handleCertificateCheck = (e) => {
+    const handleCertificateCheck = async (e) => {
         e.preventDefault();
         if (certificateId.trim()) {
             setIsVerifying(true);
-            setTimeout(() => {
-                const found = certificates?.find(
-                    cert => cert.id.toLowerCase() === certificateId.trim().toLowerCase()
-                );
-                setVerifyResult(found ? { found: true, certificate: found } : { found: false });
-                setIsVerifying(false);
-            }, 800);
+            try {
+                const { data: cert } = await supabase
+                    .from('certificates')
+                    .select('*, course:courses(title), user:profiles!certificates_user_id_fkey(full_name)')
+                    .eq('code', certificateId.trim())
+                    .maybeSingle();
+
+                if (cert) {
+                    setVerifyResult({ found: true, certificate: {
+                        id: cert.code,
+                        courseName: cert.course?.title,
+                        userName: cert.user?.full_name,
+                        issuedDate: cert.issued_at,
+                    }});
+                } else {
+                    setVerifyResult({ found: false });
+                }
+            } catch (err) {
+                setVerifyResult({ found: false });
+            }
+            setIsVerifying(false);
         }
     };
 
@@ -161,8 +215,8 @@ const HomePage = () => {
                                 Explore Courses
                                 <ArrowRight size={20} />
                             </Link>
-                            <Link to="/register" className="btn btn-white btn-lg">
-                                Register Now
+                        <Link to="/login" className="btn btn-white btn-lg">
+                                Login
                             </Link>
                         </div>
 
@@ -173,7 +227,7 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                        <CountUp end={stats.totalStudents} formatter={formatNumber} />+
+                                    <CountUp end={siteStats.totalStudents} formatter={formatNumber} />+
                                     </p>
                                     <p className="stat-label">Students</p>
                                 </div>
@@ -185,7 +239,7 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                        <CountUp end={stats.totalCourses} formatter={formatNumber} />+
+                                    <CountUp end={siteStats.totalCourses} formatter={formatNumber} />+
                                     </p>
                                     <p className="stat-label">Courses</p>
                                 </div>
@@ -197,7 +251,7 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                        <CountUp end={stats.totalCertificates} formatter={formatNumber} />+
+                                    <CountUp end={siteStats.totalCertificates} formatter={formatNumber} />+
                                     </p>
                                     <p className="stat-label">Certificates</p>
                                 </div>
@@ -297,8 +351,8 @@ const HomePage = () => {
                 </div>
                 <div className="categories-carousel">
                     <div className="categories-track">
-                        {[...categories, ...categories].map((category, index) => {
-                            const IconComponent = iconMap[category.icon];
+                        {[...categoriesData, ...categoriesData].map((category, index) => {
+                            const IconComponent = iconMap[category.icon] || BookOpen;
                             return (
                                 <Link
                                     to={`/courses?category=${category.name}`}
@@ -306,10 +360,10 @@ const HomePage = () => {
                                     className="category-card"
                                 >
                                     <div className="category-icon">
-                                        {IconComponent && <IconComponent size={28} />}
+                                        <IconComponent size={28} />
                                     </div>
                                     <h3>{category.name}</h3>
-                                    <p>{category.count} Courses</p>
+                                    <p>{category.course_count || 0} Courses</p>
                                 </Link>
                             );
                         })}
@@ -336,7 +390,12 @@ const HomePage = () => {
                     </div>
 
                     <div className="grid-courses">
-                        {popularCourses.map((course, index) => (
+                        {popularCourses.length === 0 ? (
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                                <BookOpen size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                                <p>Belum ada kursus yang dipublikasikan</p>
+                            </div>
+                        ) : popularCourses.map((course, index) => (
                             <Link
                                 to={`/course/${course.id}`}
                                 key={course.id}
@@ -344,38 +403,42 @@ const HomePage = () => {
                                 style={{ animationDelay: `${index * 0.1}s` }}
                             >
                                 <div className="course-image">
-                                    <img src={course.thumbnail} alt={course.title} />
+                                    {course.thumbnail_url ? (
+                                        <img src={course.thumbnail_url} alt={course.title} />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <BookOpen size={40} color="white" />
+                                        </div>
+                                    )}
                                     <div className="course-badges">
                                         <span className="badge badge-level">{course.level}</span>
-                                        <span className={`badge ${course.isFree ? 'badge-free' : 'badge-premium'}`}>
-                                            {course.isFree ? 'Free' : 'Premium'}
+                                        <span className={`badge ${!course.price ? 'badge-free' : 'badge-premium'}`}>
+                                            {!course.price ? 'Free' : 'Premium'}
                                         </span>
                                     </div>
                                 </div>
                                 <div className="course-content">
-                                    <div className="course-category">{course.category}</div>
+                                    <div className="course-category">{course.category?.name || '-'}</div>
                                     <h3 className="course-title">{course.title}</h3>
 
                                     <div className="course-instructor">
                                         <div className="instructor-icon">
                                             <GraduationCap size={16} />
                                         </div>
-                                        <span>{course.instructor}</span>
+                                        <span>{course.instructor?.full_name || 'Instructor'}</span>
                                     </div>
 
                                     <div className="course-meta">
                                         <div className="rating">
                                             <Star size={14} fill="#eab308" color="#eab308" />
-                                            <span>{course.rating}</span>
+                                            <span>{course.avg_rating?.toFixed(1) || '-'}</span>
                                         </div>
                                         <span className="dot">•</span>
-                                        <span>{course.lessons} lessons</span>
-                                        <span className="dot">•</span>
-                                        <span>{course.duration}</span>
+                                        <span>{course.level}</span>
                                     </div>
 
                                     <div className="course-footer">
-                                        <p className="course-price">{formatPrice(course.price)}</p>
+                                        <p className="course-price">{formatPrice(course.price || 0)}</p>
                                     </div>
                                 </div>
                             </Link>

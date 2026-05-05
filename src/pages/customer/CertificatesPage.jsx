@@ -1,121 +1,83 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Award, Download, Calendar, BookOpen, Copy, Search } from 'lucide-react';
-import { useAuth } from '../../App';
+import { useState, useEffect } from 'react';
+import { Award, Download, ExternalLink } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import CustomerSidebar from '../../components/CustomerSidebar';
+import './CertificatesPage.css';
 import '../admin/AdminPages.css';
-import './CertificatesPage.css'; // Keep custom styles for certificate card if needed
 
 const CertificatesPage = () => {
-    const { user, certificates } = useAuth();
-    const [searchTerm, setSearchTerm] = useState('');
+    const { profile } = useAuth();
+    const [certificates, setCertificates] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredCertificates = certificates.filter(cert =>
-        cert.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cert.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    useEffect(() => {
+        if (profile) loadCertificates();
+    }, [profile]);
 
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
-    const handleCopyId = (certId) => {
-        navigator.clipboard.writeText(certId);
-        alert(`Certificate ID "${certId}" copied to clipboard!`);
+    const loadCertificates = async () => {
+        try {
+            const { data } = await supabase
+                .from('certificates')
+                .select('*, course:courses(title, instructor:profiles!courses_instructor_id_fkey(full_name))')
+                .eq('user_id', profile.id)
+                .order('issued_at', { ascending: false });
+            setCertificates(data || []);
+        } catch (err) {
+            console.error(err);
+        }
+        setLoading(false);
     };
 
     return (
         <div className="admin-page">
             <CustomerSidebar />
-
             <main className="admin-main">
                 <header className="admin-header">
-                    <div>
-                        <h1>My Certificates</h1>
-                        <p>Your achievements and earned certificates</p>
-                    </div>
-                    <div className="header-actions">
-                        <div className="search-bar" style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)', padding: '0.5rem 1rem', width: '300px' }}>
-                            <Search size={18} style={{ color: 'var(--text-secondary)', marginRight: '0.5rem' }} />
-                            <input
-                                type="text"
-                                placeholder="Search certificates..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                style={{ background: 'none', border: 'none', color: 'var(--text-primary)', width: '100%', outline: 'none' }}
-                            />
-                        </div>
-                    </div>
+                    <div><h1>Sertifikat Saya</h1><p>Sertifikat yang telah Anda peroleh</p></div>
                 </header>
-
-                <div className="content-section">
-                    {filteredCertificates && filteredCertificates.length > 0 ? (
-                        <div className="certificates-grid">
-                            {filteredCertificates.map((cert) => (
-                                <div key={cert.id} className="certificate-card">
-                                    <div className="certificate-badge">
-                                        <Award size={48} />
-                                    </div>
-
-                                    <div className="certificate-content">
-                                        <h3>{cert.courseName}</h3>
-
-                                        <div className="certificate-meta">
-                                            <div className="meta-item">
-                                                <Calendar size={16} />
-                                                <span>Issued: {formatDate(cert.issuedDate)}</span>
-                                            </div>
-                                            <div className="meta-item cert-id-row">
-                                                <BookOpen size={16} />
-                                                <span>ID: {cert.id}</span>
-                                                <button
-                                                    className="copy-btn"
-                                                    onClick={() => handleCopyId(cert.id)}
-                                                    title="Copy Certificate ID"
-                                                >
-                                                    <Copy size={14} />
-                                                    {/* Copy text is hidden on small screens in CSS usually, but icon is fine */}
-                                                </button>
-                                            </div>
+                <section className="content-section">
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Memuat...</div>
+                    ) : certificates.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '3rem' }}>
+                            <Award size={48} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: '1rem' }} />
+                            <p style={{ color: 'var(--text-muted)' }}>Anda belum memiliki sertifikat</p>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Selesaikan kursus dan lulus semua quiz untuk mendapatkan sertifikat</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                            {certificates.map(cert => (
+                                <div key={cert.id} style={{
+                                    background: 'var(--bg-primary)', border: '1px solid var(--border-color)',
+                                    borderRadius: '12px', padding: '1.25rem',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                        <div style={{
+                                            width: '40px', height: '40px', borderRadius: '50%',
+                                            background: 'rgba(245, 158, 11, 0.15)', display: 'flex',
+                                            alignItems: 'center', justifyContent: 'center',
+                                        }}>
+                                            <Award size={20} style={{ color: '#f59e0b' }} />
                                         </div>
-
-                                        <div className="certificate-recipient">
-                                            <p>Awarded to</p>
-                                            <h4>{cert.userName}</h4>
-                                        </div>
-
-                                        <div className="certificate-actions">
-                                            <button className="btn btn-primary">
-                                                <Download size={18} />
-                                                Download
-                                            </button>
+                                        <div>
+                                            <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                                                {cert.course?.title}
+                                            </h3>
+                                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                                {cert.course?.instructor?.full_name}
+                                            </p>
                                         </div>
                                     </div>
-
-                                    <div className="certificate-decoration">
-                                        <div className="decoration-circle"></div>
-                                        <div className="decoration-circle"></div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                        <p style={{ margin: '0.25rem 0' }}><strong>Kode:</strong> {cert.code}</p>
+                                        <p style={{ margin: '0.25rem 0' }}><strong>Tanggal:</strong> {new Date(cert.issued_at).toLocaleDateString('id-ID')}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    ) : (
-                        <div className="empty-state">
-                            <div className="empty-icon">
-                                <Award size={64} />
-                            </div>
-                            <h2>No Certificates Yet</h2>
-                            <p>Complete a course to earn your first certificate!</p>
-                            <Link to="/courses" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-                                Browse Courses
-                            </Link>
-                        </div>
                     )}
-                </div>
+                </section>
             </main>
         </div>
     );

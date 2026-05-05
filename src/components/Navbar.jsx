@@ -1,14 +1,22 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth, useTheme } from '../App';
+import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import {
     Menu, X, BookOpen, Award, User, LogOut,
-    ChevronDown, ArrowLeft, Sun, Moon, HelpCircle
+    ChevronDown, ArrowLeft, Sun, Moon, HelpCircle, Bell
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import './Navbar.css';
 
 const Navbar = () => {
-    const { user, logout } = useAuth();
+    const { profile, user: authUser, logout, isAuthenticated } = useAuth();
+    // Use profile data if available, otherwise build a fallback from auth user metadata
+    const user = profile || (authUser ? {
+        full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+        avatar_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null,
+        role: null,
+        email: authUser.email,
+    } : null);
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
@@ -68,6 +76,12 @@ const Navbar = () => {
         }
     };
 
+    const getAvatarInitials = () => {
+        if (!user) return '?';
+        if (user.avatar_url) return null; // Will use img tag
+        return (user.full_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    };
+
     return (
         <nav className="navbar">
             <div className="navbar-container">
@@ -124,7 +138,7 @@ const Navbar = () => {
                         )}
                     </div>
 
-                    {user ? (
+                    {isAuthenticated && user ? (
                         <>
                             <Link to={getDashboardLink()} className="btn btn-ghost dashboard-nav-btn" style={{ color: 'var(--primary-500)' }}>
                                 Dashboard
@@ -134,17 +148,21 @@ const Navbar = () => {
                                     className="profile-trigger"
                                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                                 >
-                                    <div className="avatar">{user.avatar}</div>
-                                    <span className="profile-name">{user.name}</span>
+                                    <div className="avatar">
+                                        {user.avatar_url ? <img src={user.avatar_url} alt="" style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} /> : getAvatarInitials()}
+                                    </div>
+                                    <span className="profile-name">{user.full_name}</span>
                                     <ChevronDown size={16} />
                                 </button>
 
                                 {isProfileOpen && (
                                     <div className="dropdown-menu">
                                         <div className="dropdown-header">
-                                            <div className="avatar-lg">{user.avatar}</div>
+                                            <div className="avatar-lg">
+                                                {user.avatar_url ? <img src={user.avatar_url} alt="" style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} /> : getAvatarInitials()}
+                                            </div>
                                             <div>
-                                                <p className="dropdown-name">{user.name}</p>
+                                                <p className="dropdown-name">{user.full_name}</p>
                                                 <p className="dropdown-role">{user.role}</p>
                                             </div>
                                         </div>
@@ -159,6 +177,10 @@ const Navbar = () => {
                                                 My Certificates
                                             </Link>
                                         )}
+                                        <Link to="/notifications" className="dropdown-item">
+                                            <Bell size={16} />
+                                            Notifikasi
+                                        </Link>
                                         <div className="dropdown-divider"></div>
                                         <button onClick={handleLogout} className="dropdown-item logout">
                                             <LogOut size={16} />
