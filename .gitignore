@@ -32,3 +32,13 @@ migrate-imports.mjs
 *.sw?
 
 .vercel
+# Supabase
+.branches
+.temp
+config.toml
+.gitignore
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local

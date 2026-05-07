@@ -21,10 +21,17 @@ const FullscreenQuizPage = () => {
         try {
             const { data } = await supabase
                 .from('contents')
-                .select('*')
+                .select('*, quiz_questions(*)')
                 .eq('id', contentId)
                 .eq('type', 'exercise')
                 .single();
+            
+            if (data) {
+                data.questions = data.quiz_questions?.map(q => ({
+                    ...q,
+                    correctAnswer: q.correct_answer
+                })) || [];
+            }
             setQuizContent(data);
         } catch (err) {
             console.error(err);

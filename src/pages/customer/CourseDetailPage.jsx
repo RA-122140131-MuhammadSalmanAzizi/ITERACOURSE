@@ -60,9 +60,21 @@ const CourseDetailPage = () => {
             // Fetch chapters with contents
             const { data: chaptersData } = await supabase
                 .from('chapters')
-                .select('*, contents(*)')
+                .select('*, contents(*, quiz_questions(*))')
                 .eq('course_id', id)
                 .order('sort_order');
+            
+            if (chaptersData) {
+                chaptersData.forEach(ch => {
+                    if (ch.contents) {
+                        ch.contents.forEach(c => {
+                            if (c.type === 'exercise' && c.quiz_questions) {
+                                c.questions = c.quiz_questions;
+                            }
+                        });
+                    }
+                });
+            }
             setChapters(chaptersData || []);
 
             // Fetch approved reviews

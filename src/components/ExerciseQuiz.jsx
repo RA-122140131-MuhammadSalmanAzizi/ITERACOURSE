@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, RotateCcw, Trophy, AlertCircle, Flag, Clock, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import './ExerciseQuiz.css';
 
-const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoStart }) => {
-    const [quizStarted, setQuizStarted] = useState(false);
+const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoStart, initialScore, initialCompleted }) => {
+    const [quizStarted, setQuizStarted] = useState(initialCompleted || false);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState({});
     const [flaggedQuestions, setFlaggedQuestions] = useState([]);
-    const [showResults, setShowResults] = useState(false);
-    const [score, setScore] = useState(0);
+    const [showResults, setShowResults] = useState(initialCompleted || false);
+    const [score, setScore] = useState(initialScore || 0);
     const [timeLeft, setTimeLeft] = useState(null);
 
     const [navigatorPage, setNavigatorPage] = useState(0);
@@ -62,6 +62,7 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
             return;
         }
         setQuizStarted(true);
+        setShowResults(false);
         setTimeLeft(quizDuration);
     };
 
@@ -185,10 +186,12 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
                             <p className="result-message success">
                                 You have successfully passed this exercise!
                             </p>
-                            <button className="btn btn-primary btn-lg" onClick={handlePassComplete}>
-                                <CheckCircle size={20} />
-                                Continue Learning
-                            </button>
+                            {!initialCompleted && (
+                                <button className="btn btn-primary btn-lg" onClick={handlePassComplete}>
+                                    <CheckCircle size={20} />
+                                    Continue Learning
+                                </button>
+                            )}
                         </>
                     ) : (
                         <>
@@ -202,34 +205,41 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
                         </>
                     )}
 
-                    <div className="answer-review">
-                        <h3>Answer Review</h3>
-                        {questions.map((q, idx) => {
-                            const userAnswer = selectedAnswers[q.id];
-                            const isCorrect = userAnswer === q.correctAnswer;
-                            return (
-                                <div key={q.id} className={`review-item ${isCorrect ? 'correct' : 'incorrect'}`}>
-                                    <div className="review-header">
-                                        <span className="review-number">Q{idx + 1}</span>
-                                        {isCorrect ? (
-                                            <CheckCircle size={18} className="correct-icon" />
-                                        ) : (
-                                            <XCircle size={18} className="incorrect-icon" />
+                    {Object.keys(selectedAnswers).length > 0 && (
+                        <div className="answer-review">
+                            <h3>Answer Review</h3>
+                            {questions.map((q, idx) => {
+                                const userAnswer = selectedAnswers[q.id];
+                                const isCorrect = userAnswer === q.correctAnswer;
+                                return (
+                                    <div key={q.id} className={`review-item ${isCorrect ? 'correct' : 'incorrect'}`}>
+                                        <div className="review-header">
+                                            <span className="review-number">Q{idx + 1}</span>
+                                            {isCorrect ? (
+                                                <CheckCircle size={18} className="correct-icon" />
+                                            ) : (
+                                                <XCircle size={18} className="incorrect-icon" />
+                                            )}
+                                        </div>
+                                        <p className="review-question">{q.question}</p>
+                                        {q.image_url && (
+                                            <div className="review-image-container" style={{ margin: '0.5rem 0', textAlign: 'left' }}>
+                                                <img src={q.image_url} alt="Question" style={{ maxWidth: '100%', maxHeight: '150px', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+                                            </div>
+                                        )}
+                                        <p className="your-answer">
+                                            Your answer: {q.options[userAnswer] || 'Not answered'}
+                                        </p>
+                                        {!isCorrect && (
+                                            <p className="correct-answer">
+                                                Correct: {q.options[q.correctAnswer]}
+                                            </p>
                                         )}
                                     </div>
-                                    <p className="review-question">{q.question}</p>
-                                    <p className="your-answer">
-                                        Your answer: {q.options[userAnswer] || 'Not answered'}
-                                    </p>
-                                    {!isCorrect && (
-                                        <p className="correct-answer">
-                                            Correct: {q.options[q.correctAnswer]}
-                                        </p>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -266,6 +276,11 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
             <div className="quiz-content">
                 <div className="question-card">
                     <p className="question-text">{currentQ?.question}</p>
+                    {currentQ?.image_url && (
+                        <div className="question-image-container" style={{ margin: '1rem 0', textAlign: 'center' }}>
+                            <img src={currentQ.image_url} alt="Question" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
+                        </div>
+                    )}
 
                     <div className="options-list">
                         {currentQ?.options.map((option, idx) => (
