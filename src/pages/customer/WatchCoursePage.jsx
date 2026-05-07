@@ -59,7 +59,7 @@ const WatchCoursePage = () => {
 
     // Get all contents flattened
     const allContents = chapters.flatMap(ch =>
-        (ch.contents || []).sort((a, b) => a.sort_order - b.sort_order)
+        (ch.contents ? [...ch.contents] : []).sort((a, b) => a.sort_order - b.sort_order)
     );
     const currentContent = allContents[currentContentIndex];
 
@@ -195,12 +195,22 @@ const WatchCoursePage = () => {
             case 'video':
                 return (
                     <div className="content-viewer-container">
-                        <div className="content-preview video-preview">
-                            <Play size={64} />
-                            <h3>{currentContent.title}</h3>
-                            <span className="content-duration">{currentContent.duration}</span>
-                            <p className="auto-complete-notice">Konten ini otomatis ditandai selesai</p>
-                        </div>
+                        {currentContent.video_url || currentContent.file_url ? (
+                            <video 
+                                controls 
+                                src={currentContent.video_url || currentContent.file_url} 
+                                style={{ width: '100%', maxHeight: '70vh', background: '#000', borderRadius: '8px' }}
+                            >
+                                Browser Anda tidak mendukung pemutar video.
+                            </video>
+                        ) : (
+                            <div className="content-preview video-preview">
+                                <Play size={64} />
+                                <h3>{currentContent.title}</h3>
+                                <span className="content-duration">{currentContent.duration}</span>
+                                <p className="auto-complete-notice">Video belum tersedia</p>
+                            </div>
+                        )}
                     </div>
                 );
             case 'pdf':
@@ -339,7 +349,7 @@ const WatchCoursePage = () => {
                                 </button>
                                 {expandedChapters.includes(chapterIndex) && (
                                     <div className="contents-list">
-                                        {chapter.contents?.sort((a, b) => a.sort_order - b.sort_order).map((content) => {
+                                        {(chapter.contents ? [...chapter.contents] : []).sort((a, b) => a.sort_order - b.sort_order).map((content) => {
                                             const globalIndex = contentIndex++;
                                             const isActive = globalIndex === currentContentIndex;
                                             const isContentCompleted = completedContents.includes(content.id) ||

@@ -354,7 +354,7 @@ const CourseDetailPage = () => {
 
                                         {expandedChapters.includes(index) && (
                                             <div className="contents-list">
-                                                {chapter.contents?.sort((a, b) => a.sort_order - b.sort_order).map((content) => (
+                                                {(chapter.contents ? [...chapter.contents] : []).sort((a, b) => a.sort_order - b.sort_order).map((content) => (
                                                     <div
                                                         key={content.id}
                                                         className={`content-item ${content.type}`}
