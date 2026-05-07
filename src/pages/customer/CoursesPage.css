@@ -499,6 +499,22 @@
 }
 
 /* Responsive */
+.close-filters-mobile {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+}
+
+.close-filters-mobile:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+}
+
 @media (max-width: 1024px) {
     .courses-layout {
         grid-template-columns: 1fr;
@@ -523,6 +539,12 @@
     .filter-toggle {
         display: flex;
     }
+    
+    .close-filters-mobile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 768px) {
@@ -530,6 +552,17 @@
         flex-wrap: wrap;
     }
 
+    .courses-grid.grid {
+        /* Let auto-fill handle it until 600px */
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    
+    .search-bar {
+        margin: 2rem 1rem 0;
+    }
+}
+
+@media (max-width: 600px) {
     .courses-grid.grid {
         grid-template-columns: 1fr;
     }

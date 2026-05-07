@@ -136,11 +136,20 @@ const CoursesPage = () => {
                         <aside className={`filters-sidebar ${showFilters ? 'show' : ''}`}>
                             <div className="filters-header">
                                 <h3>Filters</h3>
-                                {hasActiveFilters && (
-                                    <button className="clear-filters" onClick={clearFilters}>
-                                        Clear All
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    {hasActiveFilters && (
+                                        <button className="clear-filters" onClick={clearFilters}>
+                                            Clear All
+                                        </button>
+                                    )}
+                                    <button 
+                                        className="close-filters-mobile" 
+                                        onClick={() => setShowFilters(false)}
+                                        aria-label="Close filters"
+                                    >
+                                        <X size={20} />
                                     </button>
-                                )}
+                                </div>
                             </div>
 
                             {/* Category Filter */}
@@ -322,14 +331,14 @@ const CoursesPage = () => {
                                                     <span>{course.instructor?.full_name || 'Instructor'}</span>
                                                 </div>
 
-                                                    <div className="course-meta">
-                                                        <div className="rating">
-                                                            <Star size={14} fill="#eab308" color="#eab308" />
-                                                            <span>{course.avg_rating?.toFixed(1) || '-'}</span>
-                                                        </div>
-                                                        <span className="dot">•</span>
-                                                        <span>{course.level}</span>
+                                                <div className="course-meta">
+                                                    <div className="rating">
+                                                        <Star size={14} fill="#eab308" color="#eab308" />
+                                                        <span>{course.avg_rating?.toFixed(1) || '-'}</span>
                                                     </div>
+                                                    <span className="dot">•</span>
+                                                    <span>{course.level}</span>
+                                                </div>
 
                                                 <div className="course-footer">
                                                     <p className="course-price">{formatPrice(course.price || 0)}</p>

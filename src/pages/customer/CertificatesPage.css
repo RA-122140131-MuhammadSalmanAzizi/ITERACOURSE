@@ -44,7 +44,7 @@
 
 .certificate-card {
     position: relative;
-    background: var(--bg-card);
+    background: red;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-xl);
     padding: 2rem;
@@ -235,3 +235,95 @@
     }
 }
 
+/* Modal Styles */
+.certificate-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+}
+
+.certificate-modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-xl);
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.certificate-modal-header {
+    position: relative;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.certificate-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.certificate-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.certificate-modal-close:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.certificate-modal-body {
+    padding: 1.5rem;
+}
+
+.certificate-modal-thumbnail {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.certificate-modal-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+}
+
+.certificate-modal-info p {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.certificate-modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    display: flex;
+    justify-content: flex-end;
+}

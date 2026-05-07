@@ -29,10 +29,30 @@ const AdminReviews = () => {
         setLoading(false);
     };
 
-    const updateStatus = async (reviewId, newStatus) => {
+    const updateStatus = async (review, newStatus) => {
         try {
-            await supabase.from('reviews').update({ status: newStatus }).eq('id', reviewId);
-            setReviews(reviews.map(r => r.id === reviewId ? { ...r, status: newStatus } : r));
+            await supabase.from('reviews').update({ status: newStatus }).eq('id', review.id);
+            setReviews(reviews.map(r => r.id === review.id ? { ...r, status: newStatus } : r));
+
+            // Recalculate average rating for the course
+            if (newStatus === 'approved' || review.status === 'approved') {
+                const { data: approvedReviews } = await supabase
+                    .from('reviews')
+                    .select('rating')
+                    .eq('course_id', review.course_id)
+                    .eq('status', 'approved');
+                    
+                let newAvg = 0;
+                if (approvedReviews && approvedReviews.length > 0) {
+                    const sum = approvedReviews.reduce((acc, curr) => acc + curr.rating, 0);
+                    newAvg = sum / approvedReviews.length;
+                }
+                
+                await supabase
+                    .from('courses')
+                    .update({ avg_rating: newAvg })
+                    .eq('id', review.course_id);
+            }
         } catch (err) {
             alert('Error: ' + err.message);
         }
@@ -91,18 +111,20 @@ const AdminReviews = () => {
                                         </span>
                                     </div>
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0.75rem 0 0' }}>{review.comment}</p>
-                                    {review.status === 'pending' && (
-                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-                                            <button onClick={() => updateStatus(review.id, 'approved')} className="btn btn-sm"
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                                        {review.status !== 'approved' && (
+                                            <button onClick={() => updateStatus(review, 'approved')} className="btn btn-sm"
                                                 style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: 'none', padding: '0.35rem 0.75rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                                 <CheckCircle size={14} /> Approve
                                             </button>
-                                            <button onClick={() => updateStatus(review.id, 'rejected')} className="btn btn-sm"
+                                        )}
+                                        {review.status !== 'rejected' && (
+                                            <button onClick={() => updateStatus(review, 'rejected')} className="btn btn-sm"
                                                 style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: 'none', padding: '0.35rem 0.75rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                                 <XCircle size={14} /> Reject
                                             </button>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>

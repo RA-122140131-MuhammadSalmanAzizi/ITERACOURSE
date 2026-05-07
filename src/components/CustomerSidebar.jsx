@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, BookOpen, MessageSquare,
-    Award, LogOut, Eye, Sun, Moon, ClipboardList, Heart, ShoppingBag
+    Award, LogOut, Eye, Sun, Moon, ClipboardList, Heart, ShoppingBag, Menu, X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -14,6 +14,7 @@ const CustomerSidebar = () => {
     const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const [imgError, setImgError] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -28,12 +29,25 @@ const CustomerSidebar = () => {
     };
 
     return (
-        <aside className="admin-sidebar" style={{ backgroundColor: 'var(--bg-secondary)', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="sidebar-header-fixed">
-                <div className="sidebar-logo">
-                    <LayoutDashboard size={24} />
-                    <span>Student Panel</span>
-                </div>
+        <>
+            <button className="mobile-menu-btn" onClick={() => setIsOpen(!isOpen)}>
+                <Menu size={24} />
+            </button>
+            <div className={`sidebar-overlay ${isOpen ? 'show' : ''}`} onClick={() => setIsOpen(false)} />
+            
+            <aside className={`admin-sidebar ${isOpen ? 'open' : ''}`} style={{ backgroundColor: 'var(--bg-secondary)', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+                <div className="sidebar-header-fixed" style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                        <div className="sidebar-logo" style={{ marginBottom: 0 }}>
+                            <LayoutDashboard size={24} />
+                            <span>Student Panel</span>
+                        </div>
+                        {isOpen && (
+                            <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }} className="close-sidebar-mobile">
+                                <X size={24} />
+                            </button>
+                        )}
+                    </div>
 
                 <Link to="/customer/profile" className="sidebar-profile">
                     <div className="profile-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -108,6 +122,7 @@ const CustomerSidebar = () => {
                 </button>
             </div>
         </aside>
+        </>
     );
 };
 

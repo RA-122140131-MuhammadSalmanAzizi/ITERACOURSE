@@ -484,8 +484,14 @@ const DosenUploadCourse = () => {
                     // Upload file if it has a pending File object
                     if (content.fileObj) {
                         const progressKey = `file_${content.id}`;
+                        const useLocalVideo = import.meta.env.VITE_USE_LOCAL_VIDEO === 'true';
+                        
                         if (content.type === 'video') {
-                            finalUrl = await uploadVideoToCloudinary(content.fileObj, progressKey);
+                            if (useLocalVideo) {
+                                finalUrl = await uploadToSupabase(content.fileObj, 'videos');
+                            } else {
+                                finalUrl = await uploadVideoToCloudinary(content.fileObj, progressKey);
+                            }
                         } else if (content.type === 'pdf') {
                             finalUrl = await uploadToSupabase(content.fileObj, 'pdfs');
                         }

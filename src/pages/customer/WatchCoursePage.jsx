@@ -30,6 +30,7 @@ const WatchCoursePage = () => {
         return saved ? JSON.parse(saved) : {};
     });
     const [expandedChapters, setExpandedChapters] = useState([]);
+    const [showCompletionModal, setShowCompletionModal] = useState(false);
 
     useEffect(() => {
         if (id) loadCourseData();
@@ -47,9 +48,24 @@ const WatchCoursePage = () => {
 
             const { data: chaptersData } = await supabase
                 .from('chapters')
-                .select('*, contents(*)')
+                .select('*, contents(*, quiz_questions(*))')
                 .eq('course_id', id)
                 .order('sort_order');
+            
+            if (chaptersData) {
+                chaptersData.forEach(ch => {
+                    if (ch.contents) {
+                        ch.contents.forEach(c => {
+                            if (c.type === 'exercise' && c.quiz_questions) {
+                                c.questions = c.quiz_questions.map(q => ({
+                                    ...q,
+                                    correctAnswer: q.correct_answer
+                                }));
+                            }
+                        });
+                    }
+                });
+            }
             setChapters(chaptersData || []);
         } catch (err) {
             console.error(err);
@@ -59,9 +75,22 @@ const WatchCoursePage = () => {
 
     // Get all contents flattened
     const allContents = chapters.flatMap(ch =>
-        (ch.contents || []).sort((a, b) => a.sort_order - b.sort_order)
+        (ch.contents ? [...ch.contents] : []).sort((a, b) => a.sort_order - b.sort_order)
     );
     const currentContent = allContents[currentContentIndex];
+
+    // Progress calculation
+    const completedCount = allContents.filter(c =>
+        completedContents.includes(c.id) ||
+        (c.type === 'exercise' && exerciseScores[c.id] >= 80)
+    ).length;
+    const progress = allContents.length > 0 ? (completedCount / allContents.length) * 100 : 0;
+
+    const allExercisesPassed = allContents
+        .filter(c => c.type === 'exercise')
+        .every(c => exerciseScores[c.id] >= 80);
+
+    const canComplete = completedCount === allContents.length && allExercisesPassed;
 
     // Initialize expanded chapters
     useEffect(() => {
@@ -94,10 +123,55 @@ const WatchCoursePage = () => {
         if (!currentContent) return;
         if (['video', 'pdf', 'link'].includes(currentContent.type)) {
             if (!completedContents.includes(currentContent.id)) {
-                setCompletedContents(prev => [...prev, currentContent.id]);
+                setCompletedContents(prev => {
+                    const newCompleted = [...prev, currentContent.id];
+                    if (id) localStorage.setItem(`course_progress_${id}`, JSON.stringify(newCompleted));
+                    return newCompleted;
+                });
             }
         }
-    }, [currentContentIndex, currentContent?.id]);
+    }, [currentContentIndex, currentContent?.id, id, completedContents]);
+
+    // Sync progress to database
+    useEffect(() => {
+        if (!profile || !id || progress === 0) return;
+        
+        const syncProgress = async () => {
+            try {
+                const roundedProgress = Math.round(progress);
+                
+                // Check DB progress first to prevent overwriting with 0 if on new device
+                const { data } = await supabase
+                    .from('enrollments')
+                    .select('progress')
+                    .eq('course_id', id)
+                    .eq('user_id', profile.id)
+                    .single();
+                
+                if (data && roundedProgress > (data.progress || 0)) {
+                    await supabase
+                        .from('enrollments')
+                        .update({ progress: roundedProgress })
+                        .eq('course_id', id)
+                        .eq('user_id', profile.id);
+                }
+            } catch (err) {
+                console.error("Failed to sync progress:", err);
+            }
+        };
+
+        syncProgress();
+    }, [progress, id, profile]);
+
+    useEffect(() => {
+        if (canComplete && completedCount === allContents.length && allContents.length > 0) {
+            const hasSeen = localStorage.getItem(`course_completed_modal_${id}`);
+            if (!hasSeen) {
+                setShowCompletionModal(true);
+                localStorage.setItem(`course_completed_modal_${id}`, 'true');
+            }
+        }
+    }, [canComplete, completedCount, allContents.length, id]);
 
     if (loading) {
         return (
@@ -117,19 +191,6 @@ const WatchCoursePage = () => {
             </div>
         );
     }
-
-    // Progress calculation
-    const completedCount = allContents.filter(c =>
-        completedContents.includes(c.id) ||
-        (c.type === 'exercise' && exerciseScores[c.id] >= 80)
-    ).length;
-    const progress = allContents.length > 0 ? (completedCount / allContents.length) * 100 : 0;
-
-    const allExercisesPassed = allContents
-        .filter(c => c.type === 'exercise')
-        .every(c => exerciseScores[c.id] >= 80);
-
-    const canComplete = completedCount === allContents.length && allExercisesPassed;
 
     const handleNextContent = () => {
         if (currentContentIndex < allContents.length - 1) setCurrentContentIndex(currentContentIndex + 1);
@@ -164,6 +225,7 @@ const WatchCoursePage = () => {
                 course_id: course.id,
                 code,
             });
+            setShowCompletionModal(false);
             navigate('/customer/certificates');
         } catch (err) {
             console.error('Certificate error:', err);
@@ -195,27 +257,55 @@ const WatchCoursePage = () => {
             case 'video':
                 return (
                     <div className="content-viewer-container">
-                        <div className="content-preview video-preview">
-                            <Play size={64} />
-                            <h3>{currentContent.title}</h3>
-                            <span className="content-duration">{currentContent.duration}</span>
-                            <p className="auto-complete-notice">Konten ini otomatis ditandai selesai</p>
-                        </div>
+                        {currentContent.video_url || currentContent.file_url ? (
+                            <video 
+                                controls 
+                                src={currentContent.video_url || currentContent.file_url} 
+                                style={{ width: '100%', maxHeight: '70vh', background: '#000', borderRadius: '8px' }}
+                            >
+                                Browser Anda tidak mendukung pemutar video.
+                            </video>
+                        ) : (
+                            <div className="content-preview video-preview">
+                                <Play size={64} />
+                                <h3>{currentContent.title}</h3>
+                                <span className="content-duration">{currentContent.duration}</span>
+                                <p className="auto-complete-notice">Video belum tersedia</p>
+                            </div>
+                        )}
                     </div>
                 );
             case 'pdf':
                 return (
-                    <div className="content-viewer-container">
-                        <div className="content-preview pdf-preview">
-                            <FileText size={64} />
-                            <h3>{currentContent.title}</h3>
-                            {currentContent.file_url && (
-                                <a href={currentContent.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-                                    Download PDF
-                                </a>
-                            )}
-                            <p className="auto-complete-notice">Konten ini otomatis ditandai selesai</p>
-                        </div>
+                    <div className="content-viewer-container" style={{ height: '100%' }}>
+                        {currentContent.file_url ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '70vh', background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                                <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+                                        <FileText size={20} /> {currentContent.title}
+                                    </h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <a href={currentContent.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">
+                                            Buka di Tab Baru
+                                        </a>
+                                        <a href={currentContent.file_url} download target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
+                                            Download PDF
+                                        </a>
+                                    </div>
+                                </div>
+                                <iframe 
+                                    src={`${currentContent.file_url}#toolbar=0&view=FitH`} 
+                                    style={{ width: '100%', flex: 1, minHeight: '600px', border: 'none' }}
+                                    title={currentContent.title}
+                                />
+                            </div>
+                        ) : (
+                            <div className="content-preview pdf-preview">
+                                <FileText size={64} />
+                                <h3>{currentContent.title}</h3>
+                                <p className="auto-complete-notice">File PDF belum tersedia</p>
+                            </div>
+                        )}
                     </div>
                 );
             case 'link':
@@ -224,9 +314,9 @@ const WatchCoursePage = () => {
                         <div className="content-preview link-preview">
                             <ExternalLink size={64} />
                             <h3>{currentContent.title}</h3>
-                            {currentContent.url && (
-                                <a href={currentContent.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-                                    Buka Link
+                            {(currentContent.external_url || currentContent.url) && (
+                                <a href={currentContent.external_url || currentContent.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                                    Buka URL
                                 </a>
                             )}
                             <p className="auto-complete-notice">Konten ini otomatis ditandai selesai</p>
@@ -234,6 +324,9 @@ const WatchCoursePage = () => {
                     </div>
                 );
             case 'exercise':
+                const exerciseScore = exerciseScores[currentContent.id];
+                const isCompleted = completedContents.includes(currentContent.id) || (exerciseScore !== undefined && exerciseScore >= (currentContent.passing_score || 80));
+                
                 return (
                     <div className="content-viewer-container">
                         <ExerciseQuiz
@@ -241,6 +334,8 @@ const WatchCoursePage = () => {
                             onComplete={handleExerciseComplete}
                             passingScore={currentContent.passing_score || 80}
                             onStart={() => navigate(`/course/quiz/${course.id}/${currentContent.id}`)}
+                            initialScore={exerciseScore}
+                            initialCompleted={isCompleted}
                         />
                     </div>
                 );
@@ -339,7 +434,7 @@ const WatchCoursePage = () => {
                                 </button>
                                 {expandedChapters.includes(chapterIndex) && (
                                     <div className="contents-list">
-                                        {chapter.contents?.sort((a, b) => a.sort_order - b.sort_order).map((content) => {
+                                        {(chapter.contents ? [...chapter.contents] : []).sort((a, b) => a.sort_order - b.sort_order).map((content) => {
                                             const globalIndex = contentIndex++;
                                             const isActive = globalIndex === currentContentIndex;
                                             const isContentCompleted = completedContents.includes(content.id) ||
@@ -383,9 +478,15 @@ const WatchCoursePage = () => {
                 </aside>
             </div>
 
-            {canComplete && completedCount === allContents.length && (
+            {showCompletionModal && (
                 <div className="completion-modal">
-                    <div className="modal-content">
+                    <div className="modal-content" style={{ position: 'relative' }}>
+                        <button 
+                            onClick={() => setShowCompletionModal(false)}
+                            style={{ position: 'absolute', top: '15px', right: '15px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                        >
+                            <X size={24} />
+                        </button>
                         <div className="modal-icon"><Award size={64} /></div>
                         <h2>Selamat!</h2>
                         <p>Anda telah menyelesaikan kursus ini! Klaim sertifikat Anda sekarang.</p>
