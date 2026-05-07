@@ -84,7 +84,7 @@ const CustomerDashboard = () => {
     ];
 
     return (
-        <div className="admin-page">
+        <div className="admin-page customer-dashboard">
             <CustomerSidebar />
 
             <main className="admin-main">
@@ -125,7 +125,7 @@ const CustomerDashboard = () => {
                     <section className="content-section">
                         <div className="section-header">
                             <h2>Kursus Terakhir</h2>
-                            <Link to="/customer/courses" className="btn btn-outline btn-sm">Lihat Semua</Link>
+                            <Link to="/customer/courses" className="btn btn-outline btn-sm view-all-desktop">Lihat Semua</Link>
                         </div>
 
                         {loading ? (
@@ -139,7 +139,7 @@ const CustomerDashboard = () => {
                                 <Link to="/courses" className="btn btn-primary btn-sm">Jelajahi Kursus</Link>
                             </div>
                         ) : (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+                            <div className="recent-courses-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
                                 {recentCourses.map(enrollment => (
                                     <Link
                                         key={enrollment.id}
@@ -190,10 +190,11 @@ const CustomerDashboard = () => {
                                 ))}
                             </div>
                         )}
+                        <Link to="/customer/courses" className="btn btn-outline btn-block view-all-mobile" style={{ marginTop: '1.5rem', textAlign: 'center', justifyContent: 'center' }}>Lihat Semua Kursus</Link>
                     </section>
 
                     {/* Quick Actions */}
-                    <section className="content-section">
+                    <section className="content-section quick-actions-section">
                         <div className="section-header">
                             <h2>Aksi Cepat</h2>
                         </div>

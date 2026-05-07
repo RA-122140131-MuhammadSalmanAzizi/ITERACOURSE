@@ -63,7 +63,7 @@ const CourseDetailPage = () => {
                 .select('*, contents(*, quiz_questions(*))')
                 .eq('course_id', id)
                 .order('sort_order');
-            
+
             if (chaptersData) {
                 chaptersData.forEach(ch => {
                     if (ch.contents) {
@@ -227,18 +227,9 @@ const CourseDetailPage = () => {
                     <div className="course-header-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '3rem', alignItems: 'start' }}>
                         <div className="course-header-content">
                             <Link to="/courses" className="back-link">
-                                <ArrowLeft size={18} />
+                                <ArrowLeft size={30} />
                                 Kembali
                             </Link>
-
-                            <div className="course-badges">
-                                {!course.price ? (
-                                    <span className="badge badge-free">Free</span>
-                                ) : (
-                                    <span className="badge badge-premium">Premium</span>
-                                )}
-                                <span className="badge badge-level">{course.level}</span>
-                            </div>
 
                             <h1>{course.title}</h1>
                             <p className="course-subtitle">{course.description}</p>
