@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, BookOpen, MessageSquare,
-    Award, LogOut, Eye, Sun, Moon, ClipboardList, Heart, ShoppingBag, Menu, X
+    Award, LogOut, Eye, Sun, Moon, ClipboardList, Heart, ShoppingBag, Menu, X, Bell
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -104,6 +104,10 @@ const CustomerSidebar = () => {
                 <Link to="/customer/orders" className={`nav-item ${isActive('/customer/orders') ? 'active' : ''}`}>
                     <ShoppingBag size={20} />
                     Order History
+                </Link>
+                <Link to="/customer/notifications" className={`nav-item ${isActive('/customer/notifications') ? 'active' : ''}`}>
+                    <Bell size={20} />
+                    Notifikasi
                 </Link>
             </nav>
 

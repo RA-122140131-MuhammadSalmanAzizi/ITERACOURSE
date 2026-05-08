@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import Navbar from '../../components/Navbar';
 import DosenSidebar from '../../components/DosenSidebar';
 import AdminSidebar from '../../components/AdminSidebar';
+import CustomerSidebar from '../../components/CustomerSidebar';
 
 const NotificationsPage = () => {
     const { profile } = useAuth();
@@ -24,6 +25,7 @@ const NotificationsPage = () => {
 
     const isAdmin = profile?.role === 'admin';
     const isDosen = profile?.role === 'dosen';
+    const isCustomer = profile?.role === 'customer';
 
     useEffect(() => {
         if (profile) {
@@ -327,6 +329,16 @@ const NotificationsPage = () => {
     }
 
     // Customer view
+    if (isCustomer) {
+        return (
+            <div className="admin-page">
+                <CustomerSidebar />
+                <main className="admin-main">{content}</main>
+            </div>
+        );
+    }
+
+    // Fallback (other roles)
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-primary)' }}>
             <Navbar />
