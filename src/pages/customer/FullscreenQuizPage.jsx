@@ -123,6 +123,16 @@ const FullscreenQuizPage = () => {
                     .from('quiz_attempts')
                     .insert(attemptData);
             }
+
+            // === INDUSTRY STANDARD: Save progress to DB if passed ===
+            if (isPassed) {
+                await supabase.from('content_progress').upsert({
+                    user_id: profile.id,
+                    content_id: quizContent.id,
+                    is_completed: true,
+                    completed_at: new Date().toISOString()
+                });
+            }
         } catch (err) {
             console.error('Error saving quiz attempt:', err);
         }

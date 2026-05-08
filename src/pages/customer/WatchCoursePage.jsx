@@ -91,10 +91,13 @@ const WatchCoursePage = () => {
                 // DB progress overrides localStorage
                 const dbCompletedIds = (dbProgress || []).map(p => p.content_id);
                 const localCompleted = JSON.parse(localStorage.getItem(`course_progress_${id}`) || '[]');
-                // Merge: use union of DB + local, but if DB returned data, trust DB
-                const mergedCompleted = dbCompletedIds.length > 0
-                    ? [...new Set([...dbCompletedIds, ...localCompleted])]
-                    : localCompleted;
+                
+                // STRICT MERGE: If DB has 0 progress, assume account was reset or new enrollment.
+                // Do NOT resurrect local cache.
+                const mergedCompleted = dbProgress && dbProgress.length === 0 
+                    ? [] 
+                    : [...new Set([...dbCompletedIds, ...localCompleted])];
+                
                 setCompletedContents(mergedCompleted);
                 localStorage.setItem(`course_progress_${id}`, JSON.stringify(mergedCompleted));
 
@@ -102,8 +105,12 @@ const WatchCoursePage = () => {
                 const dbScores = {};
                 (dbQuizAttempts || []).forEach(a => { dbScores[a.content_id] = a.score; });
                 const localScores = JSON.parse(localStorage.getItem(`course_scores_${id}`) || '{}');
-                // DB scores take priority over local scores
-                const mergedScores = { ...localScores, ...dbScores };
+                
+                // STRICT MERGE for scores too
+                const mergedScores = dbQuizAttempts && dbQuizAttempts.length === 0
+                    ? {}
+                    : { ...localScores, ...dbScores };
+                    
                 setExerciseScores(mergedScores);
                 localStorage.setItem(`course_scores_${id}`, JSON.stringify(mergedScores));
             }
@@ -160,17 +167,28 @@ const WatchCoursePage = () => {
     // Auto-complete non-exercise content when viewed
     useEffect(() => {
         window.scrollTo(0, 0);
-        if (!currentContent) return;
+        if (!currentContent || !profile) return;
         if (['video', 'pdf', 'link'].includes(currentContent.type)) {
             if (!completedContents.includes(currentContent.id)) {
+                // Save to local state and localStorage
                 setCompletedContents(prev => {
                     const newCompleted = [...prev, currentContent.id];
                     if (id) localStorage.setItem(`course_progress_${id}`, JSON.stringify(newCompleted));
                     return newCompleted;
                 });
+
+                // === INDUSTRY STANDARD: Save to DB ===
+                supabase.from('content_progress').upsert({
+                    user_id: profile.id,
+                    content_id: currentContent.id,
+                    is_completed: true,
+                    completed_at: new Date().toISOString()
+                }).then(({ error }) => {
+                    if (error) console.error('Error saving content progress to DB:', error);
+                });
             }
         }
-    }, [currentContentIndex, currentContent?.id, id, completedContents]);
+    }, [currentContentIndex, currentContent?.id, id, completedContents, profile]);
 
     // Sync progress to database
     useEffect(() => {
@@ -254,6 +272,17 @@ const WatchCoursePage = () => {
 
         if (score >= 80) {
             setCompletedContents(prev => [...prev, currentContent.id]);
+            // Save to DB
+            if (profile) {
+                supabase.from('content_progress').upsert({
+                    user_id: profile.id,
+                    content_id: currentContent.id,
+                    is_completed: true,
+                    completed_at: new Date().toISOString()
+                }).then(({ error }) => {
+                    if (error) console.error('Error saving exercise progress to DB:', error);
+                });
+            }
         }
     };
 
