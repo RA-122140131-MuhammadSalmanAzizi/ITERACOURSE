@@ -67,6 +67,46 @@ const WatchCoursePage = () => {
                 });
             }
             setChapters(chaptersData || []);
+
+            // === INDUSTRY STANDARD: Load progress from DB (Single Source of Truth) ===
+            if (profile) {
+                const allContentIds = (chaptersData || []).flatMap(ch =>
+                    (ch.contents || []).map(c => c.id)
+                );
+
+                // Fetch completed content from database
+                const { data: dbProgress } = await supabase
+                    .from('content_progress')
+                    .select('content_id')
+                    .eq('user_id', profile.id)
+                    .in('content_id', allContentIds.length > 0 ? allContentIds : ['00000000-0000-0000-0000-000000000000']);
+
+                // Fetch quiz scores from database
+                const { data: dbQuizAttempts } = await supabase
+                    .from('quiz_attempts')
+                    .select('content_id, score')
+                    .eq('user_id', profile.id)
+                    .in('content_id', allContentIds.length > 0 ? allContentIds : ['00000000-0000-0000-0000-000000000000']);
+
+                // DB progress overrides localStorage
+                const dbCompletedIds = (dbProgress || []).map(p => p.content_id);
+                const localCompleted = JSON.parse(localStorage.getItem(`course_progress_${id}`) || '[]');
+                // Merge: use union of DB + local, but if DB returned data, trust DB
+                const mergedCompleted = dbCompletedIds.length > 0
+                    ? [...new Set([...dbCompletedIds, ...localCompleted])]
+                    : localCompleted;
+                setCompletedContents(mergedCompleted);
+                localStorage.setItem(`course_progress_${id}`, JSON.stringify(mergedCompleted));
+
+                // DB quiz scores override localStorage
+                const dbScores = {};
+                (dbQuizAttempts || []).forEach(a => { dbScores[a.content_id] = a.score; });
+                const localScores = JSON.parse(localStorage.getItem(`course_scores_${id}`) || '{}');
+                // DB scores take priority over local scores
+                const mergedScores = { ...localScores, ...dbScores };
+                setExerciseScores(mergedScores);
+                localStorage.setItem(`course_scores_${id}`, JSON.stringify(mergedScores));
+            }
         } catch (err) {
             console.error(err);
         }
