@@ -95,6 +95,11 @@ function App() {
                 <CustomerOrders />
               </ProtectedRoute>
             } />
+            <Route path="/customer/notifications" element={
+              <ProtectedRoute allowedRoles={['customer']}>
+                <NotificationsPage />
+              </ProtectedRoute>
+            } />
 
             {/* Legacy Redirects */}
             <Route path="/profile" element={<Navigate to="/customer/profile" replace />} />

@@ -97,20 +97,35 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
         setCurrentQuestion(index);
     };
 
-    const calculateScore = () => {
+    const handleSubmit = () => {
         let correct = 0;
         questions.forEach(q => {
             if (selectedAnswers[q.id] === q.correctAnswer) {
                 correct++;
             }
         });
-        return Math.round((correct / totalQuestions) * 100);
-    };
-
-    const handleSubmit = () => {
-        const finalScore = calculateScore();
+        const finalScore = Math.round((correct / totalQuestions) * 100);
         setScore(finalScore);
         setShowResults(true);
+
+        // Call onComplete with detailed results for saving to DB
+        if (onComplete) {
+            onComplete(finalScore, {
+                score: finalScore,
+                passed: finalScore >= passingScore,
+                totalQuestions,
+                correctAnswers: correct,
+                answers: selectedAnswers,
+                questions: questions.map(q => ({
+                    id: q.id,
+                    question: q.question,
+                    options: q.options,
+                    correctAnswer: q.correctAnswer,
+                    userAnswer: selectedAnswers[q.id],
+                    isCorrect: selectedAnswers[q.id] === q.correctAnswer
+                }))
+            });
+        }
     };
 
     const handleRetry = () => {
@@ -123,8 +138,9 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
         setTimeLeft(null);
     };
 
-    const handlePassComplete = () => {
-        onComplete && onComplete(score);
+    const handleContinue = () => {
+        // Signal to parent to navigate back
+        onComplete && onComplete(score, { navigateOnly: true });
     };
 
     const isPassed = score >= passingScore;
@@ -187,7 +203,7 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
                                 You have successfully passed this exercise!
                             </p>
                             {!initialCompleted && (
-                                <button className="btn btn-primary btn-lg" onClick={handlePassComplete}>
+                                <button className="btn btn-primary btn-lg" onClick={handleContinue}>
                                     <CheckCircle size={20} />
                                     Continue Learning
                                 </button>

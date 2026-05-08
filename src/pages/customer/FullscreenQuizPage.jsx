@@ -58,22 +58,74 @@ const FullscreenQuizPage = () => {
         );
     }
 
-    const handleComplete = (finalScore) => {
-        if (finalScore >= (quizContent.passing_score || 80)) {
-            // Save progress to localStorage
+    const handleComplete = async (finalScore, details) => {
+        // If this is just a navigation signal (user clicked Continue Learning), go back
+        if (details?.navigateOnly) {
+            navigate(`/watch/${courseId}`);
+            return;
+        }
+
+        const isPassed = finalScore >= (quizContent.passing_score || 80);
+
+        // Save progress to localStorage for passed quizzes
+        if (isPassed) {
             const savedProgress = localStorage.getItem(`course_progress_${courseId}`);
             let currentProgress = savedProgress ? JSON.parse(savedProgress) : [];
             currentProgress = [...new Set([...currentProgress, quizContent.id])];
             localStorage.setItem(`course_progress_${courseId}`, JSON.stringify(currentProgress));
 
-            // Save score
             const savedScores = localStorage.getItem(`course_scores_${courseId}`);
             let currentScores = savedScores ? JSON.parse(savedScores) : {};
             currentScores[quizContent.id] = finalScore;
             localStorage.setItem(`course_scores_${courseId}`, JSON.stringify(currentScores));
         }
 
-        navigate(`/watch/${courseId}`);
+        // Save quiz attempt to database (upsert - keep highest score)
+        try {
+            // Check if an existing attempt exists
+            const { data: existing } = await supabase
+                .from('quiz_attempts')
+                .select('id, score')
+                .eq('user_id', profile.id)
+                .eq('content_id', quizContent.id)
+                .maybeSingle();
+
+            const attemptData = {
+                user_id: profile.id,
+                content_id: quizContent.id,
+                score: finalScore,
+                passed: isPassed,
+                total_questions: details?.totalQuestions || 0,
+                correct_answers: details?.correctAnswers || 0,
+                answers: details?.questions || null,
+                attempted_at: new Date().toISOString(),
+            };
+
+            if (existing) {
+                // Only update if the new score is higher
+                if (finalScore > existing.score) {
+                    await supabase
+                        .from('quiz_attempts')
+                        .update(attemptData)
+                        .eq('id', existing.id);
+                } else {
+                    // Still update the attempt timestamp and answers, but keep the higher score
+                    await supabase
+                        .from('quiz_attempts')
+                        .update({
+                            attempted_at: new Date().toISOString(),
+                        })
+                        .eq('id', existing.id);
+                }
+            } else {
+                // Insert new attempt
+                await supabase
+                    .from('quiz_attempts')
+                    .insert(attemptData);
+            }
+        } catch (err) {
+            console.error('Error saving quiz attempt:', err);
+        }
     };
 
     return (

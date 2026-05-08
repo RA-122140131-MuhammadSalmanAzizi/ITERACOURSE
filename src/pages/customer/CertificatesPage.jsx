@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Award, Download, ExternalLink, X, Copy, Check } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import CustomerSidebar from '../../components/CustomerSidebar';
+import CertificateTemplate from '../../components/CertificateTemplate';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '../../components/ui/Pagination';
 import './CertificatesPage.css';
 import '../admin/AdminPages.css';
@@ -13,6 +14,8 @@ const CertificatesPage = () => {
     const [loading, setLoading] = useState(true);
     const [selectedCertificate, setSelectedCertificate] = useState(null);
     const [copied, setCopied] = useState(false);
+    const [downloading, setDownloading] = useState(false);
+    const certTemplateRef = useRef(null);
 
     useEffect(() => {
         if (profile) loadCertificates();
@@ -36,6 +39,31 @@ const CertificatesPage = () => {
         navigator.clipboard.writeText(code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleDownload = async () => {
+        if (!certTemplateRef.current) return;
+        setDownloading(true);
+        try {
+            const html2canvas = (await import('html2canvas')).default;
+            const { jsPDF } = await import('jspdf');
+
+            const canvas = await html2canvas(certTemplateRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#fffdf5',
+                logging: false,
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [793, 1122] });
+            pdf.addImage(imgData, 'PNG', 0, 0, 1122, 793);
+            pdf.save(`Sertifikat-${selectedCertificate.code}.pdf`);
+        } catch (err) {
+            console.error('Error generating certificate:', err);
+            alert('Gagal mengunduh sertifikat. Coba lagi.');
+        }
+        setDownloading(false);
     };
 
     return (
@@ -164,12 +192,12 @@ const CertificatesPage = () => {
                             </div>
                         </div>
                         <div className="certificate-modal-footer" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                            <button 
+                            <button
                                 onClick={() => handleCopy(selectedCertificate.code)}
                                 className="btn"
-                                style={{ 
-                                    background: copied ? '#10b981' : 'transparent', 
-                                    color: copied ? 'white' : 'var(--text-primary)', 
+                                style={{
+                                    background: copied ? '#10b981' : 'transparent',
+                                    color: copied ? 'white' : 'var(--text-primary)',
                                     border: `1px solid ${copied ? '#10b981' : 'var(--border-color)'}`,
                                     display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s'
                                 }}
@@ -178,13 +206,21 @@ const CertificatesPage = () => {
                             </button>
                             <button
                                 className="btn btn-primary"
-                                onClick={() => {
-                                    alert("Fitur Download Sertifikat akan segera hadir");
-                                }}
-                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                onClick={handleDownload}
+                                disabled={downloading}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: downloading ? 0.7 : 1 }}
                             >
-                                <Download size={16} /> Download Sertifikat
+                                <Download size={16} /> {downloading ? 'Memproses...' : 'Download Sertifikat'}
                             </button>
+                        </div>
+
+                        {/* Hidden certificate template for html2canvas capture */}
+                        <div style={{ position: 'fixed', top: '-9999px', left: '-9999px', zIndex: -1 }}>
+                            <CertificateTemplate
+                                ref={certTemplateRef}
+                                certificate={selectedCertificate}
+                                profileName={profile?.full_name}
+                            />
                         </div>
                     </div>
                 </div>
