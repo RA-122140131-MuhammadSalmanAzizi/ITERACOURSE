@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
     Play, ChevronLeft, ChevronRight, CheckCircle,
@@ -31,6 +31,11 @@ const WatchCoursePage = () => {
     });
     const [expandedChapters, setExpandedChapters] = useState([]);
     const [showCompletionModal, setShowCompletionModal] = useState(false);
+    const [videoProgress, setVideoProgress] = useState(0); // 0-100 percentage watched
+    const [videoCompleted, setVideoCompleted] = useState(false);
+    const videoRef = useRef(null);
+    const maxWatchedTimeRef = useRef(0);
+    const isSeekingRef = useRef(false);
 
     useEffect(() => {
         if (id) loadCourseData();
@@ -117,11 +122,12 @@ const WatchCoursePage = () => {
         if (id) localStorage.setItem(`course_scores_${id}`, JSON.stringify(exerciseScores));
     }, [exerciseScores, id]);
 
-    // Auto-complete non-exercise content when viewed
+    // Auto-complete non-exercise, non-video content when viewed
     useEffect(() => {
         window.scrollTo(0, 0);
         if (!currentContent) return;
-        if (['video', 'pdf', 'link'].includes(currentContent.type)) {
+        // Video requires 50% watch time; exercise requires passing score
+        if (['pdf', 'link'].includes(currentContent.type)) {
             if (!completedContents.includes(currentContent.id)) {
                 setCompletedContents(prev => {
                     const newCompleted = [...prev, currentContent.id];
@@ -131,6 +137,82 @@ const WatchCoursePage = () => {
             }
         }
     }, [currentContentIndex, currentContent?.id, id, completedContents]);
+
+    // Reset video tracking state when content changes
+    useEffect(() => {
+        if (currentContent?.type === 'video') {
+            const savedProgress = localStorage.getItem(`video_progress_${currentContent.id}`);
+            const savedMaxTime = localStorage.getItem(`video_maxtime_${currentContent.id}`);
+            if (savedProgress) {
+                setVideoProgress(parseFloat(savedProgress));
+            } else {
+                setVideoProgress(0);
+            }
+            maxWatchedTimeRef.current = savedMaxTime ? parseFloat(savedMaxTime) : 0;
+            setVideoCompleted(completedContents.includes(currentContent.id));
+        } else {
+            setVideoProgress(0);
+            maxWatchedTimeRef.current = 0;
+            setVideoCompleted(false);
+        }
+    }, [currentContent?.id]);
+
+    // Video event handlers
+    const handleVideoTimeUpdate = useCallback(() => {
+        const video = videoRef.current;
+        if (!video || !currentContent || isSeekingRef.current) return;
+
+        const currentTime = video.currentTime;
+        const duration = video.duration;
+
+        // Update max watched time
+        if (currentTime > maxWatchedTimeRef.current) {
+            maxWatchedTimeRef.current = currentTime;
+            localStorage.setItem(`video_maxtime_${currentContent.id}`, currentTime.toString());
+        }
+
+        // Calculate progress percentage based on max watched time
+        if (duration > 0) {
+            const pct = (maxWatchedTimeRef.current / duration) * 100;
+            setVideoProgress(pct);
+            localStorage.setItem(`video_progress_${currentContent.id}`, pct.toString());
+
+            // Mark as completed at 50%
+            if (pct >= 50 && !completedContents.includes(currentContent.id)) {
+                setVideoCompleted(true);
+                setCompletedContents(prev => {
+                    const newCompleted = [...prev, currentContent.id];
+                    if (id) localStorage.setItem(`course_progress_${id}`, JSON.stringify(newCompleted));
+                    return newCompleted;
+                });
+            }
+        }
+    }, [currentContent, completedContents, id]);
+
+    const handleVideoSeeking = useCallback(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        // Allow seeking backward, block seeking forward beyond max watched time
+        if (video.currentTime > maxWatchedTimeRef.current + 0.5) {
+            isSeekingRef.current = true;
+            video.currentTime = maxWatchedTimeRef.current;
+            setTimeout(() => { isSeekingRef.current = false; }, 100);
+        }
+    }, []);
+
+    const handleVideoLoadedMetadata = useCallback(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        // If there's saved progress, seek to last position
+        const savedMaxTime = localStorage.getItem(`video_maxtime_${currentContent?.id}`);
+        if (savedMaxTime) {
+            const maxTime = parseFloat(savedMaxTime);
+            maxWatchedTimeRef.current = maxTime;
+            // Don't auto-seek, let the student choose where to start from the allowed range
+        }
+    }, [currentContent?.id]);
 
     // Sync progress to database
     useEffect(() => {
@@ -258,13 +340,35 @@ const WatchCoursePage = () => {
                 return (
                     <div className="content-viewer-container">
                         {currentContent.video_url || currentContent.file_url ? (
-                            <video 
-                                controls 
-                                src={currentContent.video_url || currentContent.file_url} 
-                                style={{ width: '100%', maxHeight: '70vh', background: '#000', borderRadius: '8px' }}
-                            >
-                                Browser Anda tidak mendukung pemutar video.
-                            </video>
+                            <div className="video-player-wrapper">
+                                <video 
+                                    ref={videoRef}
+                                    controls 
+                                    controlsList="nodownload"
+                                    disablePictureInPicture
+                                    src={currentContent.video_url || currentContent.file_url} 
+                                    style={{ width: '100%', maxHeight: '70vh', background: '#000', borderRadius: '8px 8px 0 0' }}
+                                    onTimeUpdate={handleVideoTimeUpdate}
+                                    onSeeking={handleVideoSeeking}
+                                    onLoadedMetadata={handleVideoLoadedMetadata}
+                                    onContextMenu={(e) => e.preventDefault()}
+                                >
+                                    Browser Anda tidak mendukung pemutar video.
+                                </video>
+                                <div className="video-progress-info">
+                                    <div className="video-progress-bar-container">
+                                        <div className="video-progress-bar-track">
+                                            <div 
+                                                className={`video-progress-bar-fill ${videoProgress >= 50 ? 'completed' : ''}`}
+                                                style={{ width: `${Math.min(videoProgress, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className="video-watch-pct">
+                                        {Math.round(videoProgress)}% ditonton
+                                    </span>
+                                </div>
+                            </div>
                         ) : (
                             <div className="content-preview video-preview">
                                 <Play size={64} />
