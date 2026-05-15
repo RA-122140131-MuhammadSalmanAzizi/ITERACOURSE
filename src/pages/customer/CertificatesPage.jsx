@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { Award, Download, ExternalLink, X, Copy, Check } from 'lucide-react';
+import { Award, Download, ExternalLink, X, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import CustomerSidebar from '../../components/CustomerSidebar';
 import CertificateTemplate from '../../components/CertificateTemplate';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from '../../components/ui/Pagination';
 import './CertificatesPage.css';
 import '../admin/AdminPages.css';
+
+const ITEMS_PER_PAGE = 5;
 
 const CertificatesPage = () => {
     const { profile } = useAuth();
@@ -15,6 +16,7 @@ const CertificatesPage = () => {
     const [selectedCertificate, setSelectedCertificate] = useState(null);
     const [copied, setCopied] = useState(false);
     const [downloading, setDownloading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
     const certTemplateRef = useRef(null);
 
     useEffect(() => {
@@ -33,6 +35,33 @@ const CertificatesPage = () => {
             console.error(err);
         }
         setLoading(false);
+    };
+
+    // Pagination logic
+    const totalPages = Math.ceil(certificates.length / ITEMS_PER_PAGE);
+    const paginatedCertificates = certificates.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+        return pages;
     };
 
     const handleCopy = (code) => {
@@ -84,7 +113,7 @@ const CertificatesPage = () => {
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {certificates.map(cert => (
+                            {paginatedCertificates.map(cert => (
                                 <div
                                     key={cert.id}
                                     style={{
@@ -132,28 +161,61 @@ const CertificatesPage = () => {
                     )}
                     
                     {/* Pagination */}
-                    {certificates.length > 0 && (
-                        <Pagination>
-                            <PaginationContent>
-                                <PaginationItem>
-                                    <PaginationLink href="#">1</PaginationLink>
-                                </PaginationItem>
-                                <PaginationItem>
-                                    <PaginationLink href="#" isActive>
-                                        2
-                                    </PaginationLink>
-                                </PaginationItem>
-                                <PaginationItem>
-                                    <PaginationLink href="#">3</PaginationLink>
-                                </PaginationItem>
-                                <PaginationItem>
-                                    <PaginationLink href="#">4</PaginationLink>
-                                </PaginationItem>
-                                <PaginationItem>
-                                    <PaginationLink href="#">5</PaginationLink>
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
+                    {totalPages > 1 && (
+                        <div style={{
+                            display: 'flex', justifyContent: 'center', alignItems: 'center',
+                            gap: '0.5rem', marginTop: '1.5rem', flexWrap: 'wrap'
+                        }}>
+                            <button
+                                onClick={() => goToPage(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '0.25rem',
+                                    padding: '0.5rem 0.75rem', borderRadius: '8px',
+                                    border: '1px solid var(--border-color)', background: 'var(--bg-primary)',
+                                    color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+                                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.85rem', opacity: currentPage === 1 ? 0.5 : 1,
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <ChevronLeft size={16} /> Prev
+                            </button>
+
+                            {getPageNumbers().map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => goToPage(page)}
+                                    style={{
+                                        width: '36px', height: '36px', borderRadius: '8px',
+                                        border: page === currentPage ? 'none' : '1px solid var(--border-color)',
+                                        background: page === currentPage ? 'var(--primary-500)' : 'var(--bg-primary)',
+                                        color: page === currentPage ? '#fff' : 'var(--text-primary)',
+                                        cursor: 'pointer', fontWeight: page === currentPage ? 700 : 400,
+                                        fontSize: '0.85rem', transition: 'all 0.2s',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+
+                            <button
+                                onClick={() => goToPage(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '0.25rem',
+                                    padding: '0.5rem 0.75rem', borderRadius: '8px',
+                                    border: '1px solid var(--border-color)', background: 'var(--bg-primary)',
+                                    color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-primary)',
+                                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.85rem', opacity: currentPage === totalPages ? 0.5 : 1,
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Next <ChevronRight size={16} />
+                            </button>
+                        </div>
                     )}
                 </section>
             </main>

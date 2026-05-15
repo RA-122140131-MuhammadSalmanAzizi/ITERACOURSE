@@ -1,6 +1,7 @@
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -44,6 +45,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+      <NotificationProvider>
         <Router>
           <Routes>
             {/* Public Routes */}
@@ -178,6 +180,7 @@ function App() {
             } />
           </Routes>
         </Router>
+      </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

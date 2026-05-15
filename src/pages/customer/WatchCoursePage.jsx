@@ -3,7 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
     Play, ChevronLeft, ChevronRight, CheckCircle,
     List, X, Award, PlayCircle, FileText, ExternalLink,
-    ClipboardCheck, Sun, Moon, AlertCircle, ChevronDown, ChevronUp, Loader
+    ClipboardCheck, Sun, Moon, AlertCircle, ChevronDown, ChevronUp, Loader,
+    RotateCcw // DEV ONLY
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -334,6 +335,28 @@ const WatchCoursePage = () => {
         }
     };
 
+    // DEV ONLY - Reset all progress for this course
+    const handleResetProgress = () => {
+        if (!window.confirm('Reset semua progress kursus ini? (DEV ONLY)')) return;
+        // Clear completed contents & exercise scores
+        setCompletedContents([]);
+        setExerciseScores({});
+        setVideoProgress(0);
+        setVideoCompleted(false);
+        maxWatchedTimeRef.current = 0;
+        setCurrentContentIndex(0);
+        // Clear all localStorage for this course
+        localStorage.removeItem(`course_progress_${id}`);
+        localStorage.removeItem(`course_scores_${id}`);
+        localStorage.removeItem(`course_completed_modal_${id}`);
+        // Clear video progress for all contents in this course
+        allContents.forEach(c => {
+            localStorage.removeItem(`video_progress_${c.id}`);
+            localStorage.removeItem(`video_maxtime_${c.id}`);
+        });
+    };
+    // END DEV ONLY
+
     const renderContentViewer = () => {
         switch (currentContent?.type) {
             case 'video':
@@ -468,6 +491,11 @@ const WatchCoursePage = () => {
                     </div>
                 </div>
                 <div className="header-right">
+                    {/* DEV ONLY - Reset Progress Button */}
+                    <button className="theme-toggle-btn" onClick={handleResetProgress} title="Reset Progress (DEV)" style={{ color: '#ef4444' }}>
+                        <RotateCcw size={20} />
+                    </button>
+                    {/* END DEV ONLY */}
                     <button className="theme-toggle-btn" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
                         {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                     </button>

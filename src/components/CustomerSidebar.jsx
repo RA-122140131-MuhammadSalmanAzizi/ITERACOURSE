@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import '../pages/admin/AdminPages.css'; // Reuse admin styles for consistency
 
 const CustomerSidebar = () => {
@@ -13,6 +14,7 @@ const CustomerSidebar = () => {
     const navigate = useNavigate();
     const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { unreadCount } = useNotifications();
     const [imgError, setImgError] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -81,6 +83,32 @@ const CustomerSidebar = () => {
                     <LayoutDashboard size={20} />
                     Dashboard
                 </Link>
+                <Link to="/customer/notifications" className={`nav-item ${isActive('/customer/notifications') ? 'active' : ''}`} style={{ position: 'relative' }}>
+                    <Bell size={20} />
+                    Notifikasi
+                    {unreadCount > 0 && (
+                        <span style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: '#ef4444',
+                            color: '#fff',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            minWidth: '18px',
+                            height: '18px',
+                            borderRadius: '9px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 4px',
+                            lineHeight: 1,
+                        }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    )}
+                </Link>
                 <Link to="/customer/courses" className={`nav-item ${isActive('/customer/courses') ? 'active' : ''}`}>
                     <BookOpen size={20} />
                     Enrolled Courses
@@ -101,14 +129,12 @@ const CustomerSidebar = () => {
                     <Heart size={20} />
                     Wishlist
                 </Link>
+                {/* Order History - hidden for now
                 <Link to="/customer/orders" className={`nav-item ${isActive('/customer/orders') ? 'active' : ''}`}>
                     <ShoppingBag size={20} />
                     Order History
                 </Link>
-                <Link to="/customer/notifications" className={`nav-item ${isActive('/customer/notifications') ? 'active' : ''}`}>
-                    <Bell size={20} />
-                    Notifikasi
-                </Link>
+                */}
             </nav>
 
             <div className="sidebar-footer" style={{ flexShrink: 0 }}>

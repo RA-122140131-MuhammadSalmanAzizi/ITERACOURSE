@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, Check, Trash2, Send, Users, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { supabase } from '../../lib/supabase';
 import Navbar from '../../components/Navbar';
 import DosenSidebar from '../../components/DosenSidebar';
@@ -9,6 +10,7 @@ import CustomerSidebar from '../../components/CustomerSidebar';
 
 const NotificationsPage = () => {
     const { profile } = useAuth();
+    const { markRead, decrementIfUnread } = useNotifications();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -78,6 +80,7 @@ const NotificationsPage = () => {
         try {
             await supabase.from('notifications').update({ is_read: true }).eq('id', id);
             setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+            markRead();
         } catch (err) {
             console.error(err);
         }
@@ -85,8 +88,10 @@ const NotificationsPage = () => {
 
     const deleteNotif = async (id) => {
         try {
+            const notif = notifications.find(n => n.id === id);
             await supabase.from('notifications').delete().eq('id', id);
             setNotifications(notifications.filter(n => n.id !== id));
+            decrementIfUnread(!notif?.is_read);
         } catch (err) {
             console.error(err);
         }
