@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
     Play, ChevronLeft, ChevronRight, CheckCircle,
     List, X, Award, PlayCircle, FileText, ExternalLink,
-    ClipboardCheck, Sun, Moon, AlertCircle, ChevronDown, ChevronUp, Loader
+    ClipboardCheck, Sun, Moon, AlertCircle, ChevronDown, ChevronUp, Loader,
+    Lock,
+    RotateCcw // DEV ONLY
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -31,6 +33,11 @@ const WatchCoursePage = () => {
     });
     const [expandedChapters, setExpandedChapters] = useState([]);
     const [showCompletionModal, setShowCompletionModal] = useState(false);
+    const [videoProgress, setVideoProgress] = useState(0); // 0-100 percentage watched
+    const [videoCompleted, setVideoCompleted] = useState(false);
+    const videoRef = useRef(null);
+    const maxWatchedTimeRef = useRef(0);
+    const isSeekingRef = useRef(false);
 
     useEffect(() => {
         if (id) loadCourseData();
@@ -51,7 +58,7 @@ const WatchCoursePage = () => {
                 .select('*, contents(*, quiz_questions(*))')
                 .eq('course_id', id)
                 .order('sort_order');
-            
+
             if (chaptersData) {
                 chaptersData.forEach(ch => {
                     if (ch.contents) {
@@ -139,6 +146,37 @@ const WatchCoursePage = () => {
 
     const canComplete = completedCount === allContents.length && allExercisesPassed;
 
+    // Chapter locking logic
+    const isChapterCompleted = (chapterIndex) => {
+        const chapter = chapters[chapterIndex];
+        if (!chapter || !chapter.contents || chapter.contents.length === 0) return true;
+        return chapter.contents.every(c =>
+            completedContents.includes(c.id) ||
+            (c.type === 'exercise' && exerciseScores[c.id] >= 80)
+        );
+    };
+
+    const isChapterUnlocked = (chapterIndex) => {
+        if (chapterIndex === 0) return true;
+        return isChapterCompleted(chapterIndex - 1);
+    };
+
+    // Find which chapter a global content index belongs to
+    const getChapterIndexForGlobalIndex = (globalIndex) => {
+        let count = 0;
+        for (let i = 0; i < chapters.length; i++) {
+            const chapterContentCount = chapters[i].contents?.length || 0;
+            if (globalIndex < count + chapterContentCount) return i;
+            count += chapterContentCount;
+        }
+        return chapters.length - 1;
+    };
+
+    const isContentLocked = (globalIndex) => {
+        const chapterIdx = getChapterIndexForGlobalIndex(globalIndex);
+        return !isChapterUnlocked(chapterIdx);
+    };
+
     // Initialize expanded chapters
     useEffect(() => {
         if (chapters.length > 0 && allContents.length > 0) {
@@ -164,11 +202,12 @@ const WatchCoursePage = () => {
         if (id) localStorage.setItem(`course_scores_${id}`, JSON.stringify(exerciseScores));
     }, [exerciseScores, id]);
 
-    // Auto-complete non-exercise content when viewed
+    // Auto-complete non-exercise, non-video content when viewed
     useEffect(() => {
         window.scrollTo(0, 0);
-        if (!currentContent || !profile) return;
-        if (['video', 'pdf', 'link'].includes(currentContent.type)) {
+        if (!currentContent) return;
+        // Video requires 50% watch time; exercise requires passing score
+        if (['pdf', 'link'].includes(currentContent.type)) {
             if (!completedContents.includes(currentContent.id)) {
                 // Save to local state and localStorage
                 setCompletedContents(prev => {
@@ -190,14 +229,90 @@ const WatchCoursePage = () => {
         }
     }, [currentContentIndex, currentContent?.id, id, completedContents, profile]);
 
+    // Reset video tracking state when content changes
+    useEffect(() => {
+        if (currentContent?.type === 'video') {
+            const savedProgress = localStorage.getItem(`video_progress_${currentContent.id}`);
+            const savedMaxTime = localStorage.getItem(`video_maxtime_${currentContent.id}`);
+            if (savedProgress) {
+                setVideoProgress(parseFloat(savedProgress));
+            } else {
+                setVideoProgress(0);
+            }
+            maxWatchedTimeRef.current = savedMaxTime ? parseFloat(savedMaxTime) : 0;
+            setVideoCompleted(completedContents.includes(currentContent.id));
+        } else {
+            setVideoProgress(0);
+            maxWatchedTimeRef.current = 0;
+            setVideoCompleted(false);
+        }
+    }, [currentContent?.id]);
+
+    // Video event handlers
+    const handleVideoTimeUpdate = useCallback(() => {
+        const video = videoRef.current;
+        if (!video || !currentContent || isSeekingRef.current) return;
+
+        const currentTime = video.currentTime;
+        const duration = video.duration;
+
+        // Update max watched time
+        if (currentTime > maxWatchedTimeRef.current) {
+            maxWatchedTimeRef.current = currentTime;
+            localStorage.setItem(`video_maxtime_${currentContent.id}`, currentTime.toString());
+        }
+
+        // Calculate progress percentage based on max watched time
+        if (duration > 0) {
+            const pct = (maxWatchedTimeRef.current / duration) * 100;
+            setVideoProgress(pct);
+            localStorage.setItem(`video_progress_${currentContent.id}`, pct.toString());
+
+            // Mark as completed at 50%
+            if (pct >= 50 && !completedContents.includes(currentContent.id)) {
+                setVideoCompleted(true);
+                setCompletedContents(prev => {
+                    const newCompleted = [...prev, currentContent.id];
+                    if (id) localStorage.setItem(`course_progress_${id}`, JSON.stringify(newCompleted));
+                    return newCompleted;
+                });
+            }
+        }
+    }, [currentContent, completedContents, id]);
+
+    const handleVideoSeeking = useCallback(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        // Allow seeking backward, block seeking forward beyond max watched time
+        if (video.currentTime > maxWatchedTimeRef.current + 0.5) {
+            isSeekingRef.current = true;
+            video.currentTime = maxWatchedTimeRef.current;
+            setTimeout(() => { isSeekingRef.current = false; }, 100);
+        }
+    }, []);
+
+    const handleVideoLoadedMetadata = useCallback(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        // If there's saved progress, seek to last position
+        const savedMaxTime = localStorage.getItem(`video_maxtime_${currentContent?.id}`);
+        if (savedMaxTime) {
+            const maxTime = parseFloat(savedMaxTime);
+            maxWatchedTimeRef.current = maxTime;
+            // Don't auto-seek, let the student choose where to start from the allowed range
+        }
+    }, [currentContent?.id]);
+
     // Sync progress to database
     useEffect(() => {
         if (!profile || !id || progress === 0) return;
-        
+
         const syncProgress = async () => {
             try {
                 const roundedProgress = Math.round(progress);
-                
+
                 // Check DB progress first to prevent overwriting with 0 if on new device
                 const { data } = await supabase
                     .from('enrollments')
@@ -205,7 +320,7 @@ const WatchCoursePage = () => {
                     .eq('course_id', id)
                     .eq('user_id', profile.id)
                     .single();
-                
+
                 if (data && roundedProgress > (data.progress || 0)) {
                     await supabase
                         .from('enrollments')
@@ -251,7 +366,10 @@ const WatchCoursePage = () => {
     }
 
     const handleNextContent = () => {
-        if (currentContentIndex < allContents.length - 1) setCurrentContentIndex(currentContentIndex + 1);
+        const nextIndex = currentContentIndex + 1;
+        if (nextIndex < allContents.length && !isContentLocked(nextIndex)) {
+            setCurrentContentIndex(nextIndex);
+        }
     };
 
     const handlePrevContent = () => {
@@ -321,19 +439,63 @@ const WatchCoursePage = () => {
         }
     };
 
+    // DEV ONLY - Reset all progress for this course
+    const handleResetProgress = () => {
+        if (!window.confirm('Reset semua progress kursus ini? (DEV ONLY)')) return;
+        // Clear completed contents & exercise scores
+        setCompletedContents([]);
+        setExerciseScores({});
+        setVideoProgress(0);
+        setVideoCompleted(false);
+        maxWatchedTimeRef.current = 0;
+        setCurrentContentIndex(0);
+        // Clear all localStorage for this course
+        localStorage.removeItem(`course_progress_${id}`);
+        localStorage.removeItem(`course_scores_${id}`);
+        localStorage.removeItem(`course_completed_modal_${id}`);
+        // Clear video progress for all contents in this course
+        allContents.forEach(c => {
+            localStorage.removeItem(`video_progress_${c.id}`);
+            localStorage.removeItem(`video_maxtime_${c.id}`);
+        });
+    };
+    // END DEV ONLY
+
     const renderContentViewer = () => {
         switch (currentContent?.type) {
             case 'video':
                 return (
                     <div className="content-viewer-container">
                         {currentContent.video_url || currentContent.file_url ? (
-                            <video 
-                                controls 
-                                src={currentContent.video_url || currentContent.file_url} 
-                                style={{ width: '100%', maxHeight: '70vh', background: '#000', borderRadius: '8px' }}
-                            >
-                                Browser Anda tidak mendukung pemutar video.
-                            </video>
+                            <div className="video-player-wrapper">
+                                <video
+                                    ref={videoRef}
+                                    controls
+                                    controlsList="nodownload"
+                                    disablePictureInPicture
+                                    src={currentContent.video_url || currentContent.file_url}
+                                    style={{ width: '100%', maxHeight: '70vh', background: '#000', borderRadius: '8px 8px 0 0' }}
+                                    onTimeUpdate={handleVideoTimeUpdate}
+                                    onSeeking={handleVideoSeeking}
+                                    onLoadedMetadata={handleVideoLoadedMetadata}
+                                    onContextMenu={(e) => e.preventDefault()}
+                                >
+                                    Browser Anda tidak mendukung pemutar video.
+                                </video>
+                                <div className="video-progress-info">
+                                    <div className="video-progress-bar-container">
+                                        <div className="video-progress-bar-track">
+                                            <div
+                                                className={`video-progress-bar-fill ${videoProgress >= 50 ? 'completed' : ''}`}
+                                                style={{ width: `${Math.min(videoProgress, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className="video-watch-pct">
+                                        {Math.round(videoProgress)}% ditonton
+                                    </span>
+                                </div>
+                            </div>
                         ) : (
                             <div className="content-preview video-preview">
                                 <Play size={64} />
@@ -354,7 +516,7 @@ const WatchCoursePage = () => {
                                         <FileText size={20} /> {currentContent.title}
                                     </h3>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <a href={currentContent.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">
+                                        <a href={currentContent.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm pdf-open-tab">
                                             Buka di Tab Baru
                                         </a>
                                         <a href={currentContent.file_url} download target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
@@ -362,11 +524,12 @@ const WatchCoursePage = () => {
                                         </a>
                                     </div>
                                 </div>
-                                <iframe 
-                                    src={`${currentContent.file_url}#toolbar=0&view=FitH`} 
-                                    style={{ width: '100%', flex: 1, minHeight: '600px', border: 'none' }}
-                                    title={currentContent.title}
-                                />
+                                <div className="pdf-iframe-wrapper">
+                                    <iframe
+                                        src={`${currentContent.file_url}#toolbar=0&view=FitH&scrollbar=0`}
+                                        title={currentContent.title}
+                                    />
+                                </div>
                             </div>
                         ) : (
                             <div className="content-preview pdf-preview">
@@ -395,7 +558,7 @@ const WatchCoursePage = () => {
             case 'exercise':
                 const exerciseScore = exerciseScores[currentContent.id];
                 const isCompleted = completedContents.includes(currentContent.id) || (exerciseScore !== undefined && exerciseScore >= (currentContent.passing_score || 80));
-                
+
                 return (
                     <div className="content-viewer-container">
                         <ExerciseQuiz
@@ -433,6 +596,11 @@ const WatchCoursePage = () => {
                     </div>
                 </div>
                 <div className="header-right">
+                    {/* DEV ONLY - Reset Progress Button */}
+                    <button className="theme-toggle-btn" onClick={handleResetProgress} title="Reset Progress (DEV)" style={{ color: '#ef4444' }}>
+                        <RotateCcw size={20} />
+                    </button>
+                    {/* END DEV ONLY */}
                     <button className="theme-toggle-btn" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
                         {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
@@ -447,12 +615,15 @@ const WatchCoursePage = () => {
                 </div>
             </header>
 
+            {/* Mobile sidebar backdrop */}
+            {showSidebar && <div className="watch-sidebar-backdrop" onClick={() => setShowSidebar(false)} />}
+
             <div className="watch-content">
                 <main className="content-section">
                     {renderContentViewer()}
                     <div className="content-info">
                         <div className="content-header">
-                            <div>
+                            <div style={{ width: '100%' }}>
                                 <div className="content-meta">
                                     <span className={`content-type-badge ${currentContent?.type}`}>
                                         {getContentIcon(currentContent?.type)}
@@ -465,8 +636,12 @@ const WatchCoursePage = () => {
                                     <button className="btn btn-secondary" onClick={handlePrevContent} disabled={currentContentIndex === 0}>
                                         <ChevronLeft size={18} /> Sebelumnya
                                     </button>
-                                    <button className="btn btn-primary" onClick={handleNextContent} disabled={currentContentIndex === allContents.length - 1}>
-                                        Selanjutnya <ChevronRight size={18} />
+                                    <button className="btn btn-primary" onClick={handleNextContent} disabled={currentContentIndex === allContents.length - 1 || isContentLocked(currentContentIndex + 1)}>
+                                        {currentContentIndex < allContents.length - 1 && isContentLocked(currentContentIndex + 1) ? (
+                                            <><Lock size={16} /> Bab Terkunci</>
+                                        ) : (
+                                            <>Selanjutnya <ChevronRight size={18} /></>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -477,7 +652,12 @@ const WatchCoursePage = () => {
                 <aside className={`lessons-sidebar ${showSidebar ? 'show' : ''}`}>
                     <div className="sidebar-header">
                         <h3>Konten Kursus</h3>
-                        <span>{completedContents.length}/{allContents.length} selesai</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span>{completedContents.length}/{allContents.length} selesai</span>
+                            <button className="sidebar-close-btn" onClick={() => setShowSidebar(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="passing-notice">
@@ -486,63 +666,79 @@ const WatchCoursePage = () => {
                     </div>
 
                     <div className="chapters-list">
-                        {chapters.map((chapter, chapterIndex) => (
-                            <div key={chapter.id} className="chapter-group">
-                                <button className="chapter-title" onClick={() => toggleChapter(chapterIndex)}>
-                                    <span>{chapter.title}</span>
-                                    <div className="chapter-right-side">
-                                        <span className="chapter-progress">
-                                            {chapter.contents?.filter(c =>
-                                                completedContents.includes(c.id) ||
-                                                (c.type === 'exercise' && exerciseScores[c.id] >= 80)
-                                            ).length}/{chapter.contents?.length}
-                                            <CheckCircle size={14} className="chapter-check-icon" />
+                        {chapters.map((chapter, chapterIndex) => {
+                            const chapterLocked = !isChapterUnlocked(chapterIndex);
+                            return (
+                                <div key={chapter.id} className="chapter-group">
+                                    <button className="chapter-title" onClick={() => toggleChapter(chapterIndex)} style={chapterLocked ? { opacity: 0.6 } : {}}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {chapterLocked && <Lock size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />}
+                                            {chapter.title}
                                         </span>
-                                        {expandedChapters.includes(chapterIndex) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                    </div>
-                                </button>
-                                {expandedChapters.includes(chapterIndex) && (
-                                    <div className="contents-list">
-                                        {(chapter.contents ? [...chapter.contents] : []).sort((a, b) => a.sort_order - b.sort_order).map((content) => {
-                                            const globalIndex = contentIndex++;
-                                            const isActive = globalIndex === currentContentIndex;
-                                            const isContentCompleted = completedContents.includes(content.id) ||
-                                                (content.type === 'exercise' && exerciseScores[content.id] >= 80);
-                                            const exerciseScore = exerciseScores[content.id];
+                                        <div className="chapter-right-side">
+                                            {!chapterLocked ? (
+                                                <span className="chapter-progress">
+                                                    {chapter.contents?.filter(c =>
+                                                        completedContents.includes(c.id) ||
+                                                        (c.type === 'exercise' && exerciseScores[c.id] >= 80)
+                                                    ).length}/{chapter.contents?.length}
+                                                    <CheckCircle size={14} className="chapter-check-icon" />
+                                                </span>
+                                            ) : (
+                                                <span className="chapter-progress" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Terkunci</span>
+                                            )}
+                                            {expandedChapters.includes(chapterIndex) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                        </div>
+                                    </button>
+                                    {expandedChapters.includes(chapterIndex) && (
+                                        <div className="contents-list">
+                                            {(chapter.contents ? [...chapter.contents] : []).sort((a, b) => a.sort_order - b.sort_order).map((content) => {
+                                                const globalIndex = contentIndex++;
+                                                const isActive = globalIndex === currentContentIndex;
+                                                const isContentCompleted = completedContents.includes(content.id) ||
+                                                    (content.type === 'exercise' && exerciseScores[content.id] >= 80);
+                                                const exerciseScore = exerciseScores[content.id];
 
-                                            return (
-                                                <button
-                                                    key={content.id}
-                                                    className={`content-item ${isActive ? 'active' : ''} ${isContentCompleted ? 'completed' : ''} ${content.type}`}
-                                                    onClick={() => setCurrentContentIndex(globalIndex)}
-                                                >
-                                                    <div className="content-icon">
-                                                        {isActive ? (
-                                                            <div className="playing-indicator">{getContentIcon(content.type)}</div>
-                                                        ) : getContentIcon(content.type)}
-                                                    </div>
-                                                    <div className="content-details">
-                                                        <span className="content-title">{content.title}</span>
-                                                        <div className="content-meta-info">
-                                                            <span className={`type-label ${content.type}`}>{getContentTypeLabel(content.type)}</span>
-                                                            {content.duration && <span className="content-duration">{content.duration}</span>}
-                                                            {content.type === 'exercise' && exerciseScore !== undefined && (
-                                                                <span className={`score-badge ${exerciseScore >= 80 ? 'passed' : 'failed'}`}>{exerciseScore}%</span>
-                                                            )}
+                                                return (
+                                                    <button
+                                                        key={content.id}
+                                                        className={`content-item ${isActive ? 'active' : ''} ${isContentCompleted ? 'completed' : ''} ${content.type} ${chapterLocked ? 'locked' : ''}`}
+                                                        onClick={() => {
+                                                            if (chapterLocked) return;
+                                                            setCurrentContentIndex(globalIndex);
+                                                        }}
+                                                        style={chapterLocked ? { opacity: 0.45, cursor: 'not-allowed' } : {}}
+                                                    >
+                                                        <div className="content-icon">
+                                                            {chapterLocked ? (
+                                                                <Lock size={16} style={{ color: 'var(--text-muted)' }} />
+                                                            ) : isActive ? (
+                                                                <div className="playing-indicator">{getContentIcon(content.type)}</div>
+                                                            ) : getContentIcon(content.type)}
                                                         </div>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                                {!expandedChapters.includes(chapterIndex) && (
-                                    <div style={{ display: 'none' }}>
-                                        {chapter.contents?.map(() => { contentIndex++; return null; })}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                                                        <div className="content-details">
+                                                            <span className="content-title">{content.title}</span>
+                                                            <div className="content-meta-info">
+                                                                <span className={`type-label ${content.type}`}>{getContentTypeLabel(content.type)}</span>
+                                                                {content.duration && <span className="content-duration">{content.duration}</span>}
+                                                                {!chapterLocked && content.type === 'exercise' && exerciseScore !== undefined && (
+                                                                    <span className={`score-badge ${exerciseScore >= 80 ? 'passed' : 'failed'}`}>{exerciseScore}%</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    {!expandedChapters.includes(chapterIndex) && (
+                                        <div style={{ display: 'none' }}>
+                                            {chapter.contents?.map(() => { contentIndex++; return null; })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </aside>
             </div>
@@ -550,7 +746,7 @@ const WatchCoursePage = () => {
             {showCompletionModal && (
                 <div className="completion-modal">
                     <div className="modal-content" style={{ position: 'relative' }}>
-                        <button 
+                        <button
                             onClick={() => setShowCompletionModal(false)}
                             style={{ position: 'absolute', top: '15px', right: '15px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
                         >

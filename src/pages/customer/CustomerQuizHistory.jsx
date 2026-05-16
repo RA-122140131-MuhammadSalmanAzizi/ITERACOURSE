@@ -38,7 +38,7 @@ const CustomerQuizHistory = () => {
             <CustomerSidebar />
             <main className="admin-main">
                 <header className="admin-header">
-                    <div><h1>Riwayat Quiz</h1><p>Semua quiz yang pernah Anda kerjakan (skor tertinggi)</p></div>
+                    <div><h1>History Quiz</h1><p>Semua quiz yang Anda kerjakan</p></div>
                 </header>
                 <section className="content-section">
                     {loading ? (
@@ -118,7 +118,7 @@ const CustomerQuizHistory = () => {
 
                                                 {/* Expand Arrow */}
                                                 {hasAnswers && (
-                                                    <div style={{ color: 'var(--text-muted)', display: 'flex' }}>
+                                                    <div style={{ color: 'var(--text-muted)', display: 'flex', paddingLeft: '1rem', paddingRight: '1rem' }}>
                                                         {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                                     </div>
                                                 )}
