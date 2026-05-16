@@ -317,15 +317,14 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
             </div>
 
             <div className="quiz-footer">
-                <div className="quiz-navigation-row" style={{ display: 'grid', gridTemplateColumns: '120px 1fr 120px', alignItems: 'center', width: '100%', gap: '1rem' }}>
+                <div className="quiz-navigation-row">
 
                     {/* Left Column: Prev Button */}
-                    <div style={{ justifySelf: 'start' }}>
+                    <div className="nav-col-left">
                         <button
-                            className="btn btn-secondary"
+                            className="btn btn-secondary nav-btn"
                             onClick={handlePrev}
                             disabled={currentQuestion === 0}
-                            style={{ minWidth: '100px' }}
                         >
                             Prev
                         </button>
@@ -380,21 +379,19 @@ const ExerciseQuiz = ({ exercise, onComplete, passingScore = 80, onStart, autoSt
                     </div>
 
                     {/* Right Column: Next/Submit */}
-                    <div style={{ justifySelf: 'end' }}>
+                    <div className="nav-col-right">
                         {currentQuestion < totalQuestions - 1 ? (
                             <button
-                                className="btn btn-primary"
+                                className="btn btn-primary nav-btn"
                                 onClick={handleNext}
-                                style={{ minWidth: '100px' }}
                             >
                                 Next
                             </button>
                         ) : (
                             <button
-                                className="btn btn-primary"
+                                className="btn btn-primary nav-btn"
                                 onClick={handleSubmit}
                                 disabled={answeredCount < totalQuestions}
-                                style={{ minWidth: '100px', whiteSpace: 'nowrap' }}
                             >
                                 Submit ({answeredCount}/{totalQuestions})
                             </button>

@@ -129,11 +129,12 @@
     overflow: hidden;
 }
 
-/* Content Section */
-.content-section {
+/* Content Section - scoped to watch page only */
+.watch-page .content-section {
     flex: 1;
     display: flex;
     flex-direction: column;
+    align-items: center;
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -143,7 +144,7 @@
     border-radius: 0 !important;
 }
 
-.content-section::-webkit-scrollbar {
+.watch-page .content-section::-webkit-scrollbar {
     display: none;
     /* Chrome, Safari and Opera */
 }
@@ -152,9 +153,8 @@
 .content-viewer-container {
     width: 100%;
     max-width: 1280px;
-    width: 100%;
     height: 100%;
-    margin: 0;
+    margin: 0 auto;
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -224,12 +224,51 @@
     color: #3b82f6;
 }
 
+/* PDF Iframe Wrapper - hides scrollbar */
+.pdf-iframe-wrapper {
+    flex: 1;
+    min-height: 600px;
+    overflow: hidden;
+    position: relative;
+    /* Native scrollbar hiding */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.pdf-iframe-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.pdf-iframe-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: none;
+    background: transparent;
+    /* Extend iframe beyond wrapper to push scrollbar out of view */
+    width: calc(100% + 25px);
+    height: 100%;
+}
+
 /* Content Info */
 .content-info {
     padding: 1.5rem 2rem;
     max-width: 1280px;
     margin: 0 auto;
     width: 100%;
+    box-sizing: border-box;
+}
+
+@media screen and (max-width: 768px) {
+    .content-info {
+        display: flex;
+        flex-direction: column;
+        /* Memastikan teks dan tombol tersusun atas-bawah */
+        align-items: center;
+        /* Menggeser seluruh isi ke tengah, menghapus area ungu */
+        text-align: center;
+        /* Merapikan teks "Video Perkenalan" agar ikut ke tengah */
+    }
 }
 
 .content-header {
@@ -292,6 +331,13 @@
     color: var(--text-muted);
 }
 
+
+@media screen and (max-width: 768px) {
+    .content-number {
+        margin-left: auto;
+    }
+}
+
 .content-header h2 {
     font-size: 1.5rem;
 }
@@ -299,6 +345,10 @@
 .content-navigation {
     display: flex;
     gap: 0.75rem;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1280px;
+    margin: 1rem auto 0;
 }
 
 /* Sidebar */
@@ -337,6 +387,27 @@
 .sidebar-header span {
     font-size: 0.8125rem;
     color: var(--text-muted);
+}
+
+/* Close button in sidebar - hidden on desktop */
+.sidebar-close-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.sidebar-close-btn:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
 }
 
 .passing-notice {
@@ -721,10 +792,44 @@
         width: 100%;
         max-width: 360px;
         transform: translateX(100%);
+        transition: transform 0.3s ease;
+        box-shadow: none;
+    }
+
+    .lessons-sidebar:not(.show) {
+        width: 100%;
+        max-width: 360px;
+        border-left: 1px solid var(--border-color);
+        transform: translateX(100%);
     }
 
     .lessons-sidebar.show {
         transform: translateX(0);
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar-close-btn {
+        display: flex;
+    }
+
+    .pdf-open-tab {
+        display: none !important;
+    }
+}
+
+/* Sidebar backdrop - hidden on desktop, visible on mobile */
+.watch-sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .watch-sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        animation: fadeIn 0.2s ease;
     }
 }
 
@@ -735,10 +840,22 @@
 
     .content-navigation {
         width: 100%;
+        gap: 0.5rem;
+        flex-direction: row;
+        justify-content: center;
     }
 
     .content-navigation .btn {
         flex: 1;
+        font-size: 0.9rem;
+        padding: 0.75rem 0.5rem;
+        justify-content: center;
+        text-align: center;
+        min-width: 0;
+    }
+
+    .content-info {
+        padding: 1rem;
     }
 
     .pdf-container,
@@ -749,6 +866,10 @@
     .pdf-preview,
     .link-preview {
         padding: 2rem 1rem;
+    }
+
+    .pdf-iframe-wrapper {
+        min-height: 400px;
     }
 }
 
