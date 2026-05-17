@@ -327,3 +327,27 @@
     display: flex;
     justify-content: flex-end;
 }
+
+.cert-show-mobile {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .cert-hide-mobile {
+        display: none !important;
+    }
+    
+    .cert-show-mobile {
+        display: inline !important;
+    }
+    
+    .certificate-modal-footer {
+        flex-wrap: wrap;
+        gap: 0.75rem !important;
+    }
+    
+    .cert-modal-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}

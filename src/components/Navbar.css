@@ -349,6 +349,8 @@
 
     .mobile-menu-btn {
         display: flex;
+        align-items: center;
+        transform: translateY(-10px);
     }
 }
 
@@ -382,5 +384,28 @@
     [data-theme="light"] .navbar-menu {
         background: rgba(255, 255, 255, 0.98);
         border-bottom-color: rgba(0, 0, 0, 0.1);
+    }
+}
+
+.mobile-theme-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .theme-toggle-wrapper {
+        display: none !important;
+    }
+
+    .hide-on-mobile {
+        display: none !important;
+    }
+
+    .mobile-theme-toggle {
+        display: flex;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+        width: 100%;
     }
 }

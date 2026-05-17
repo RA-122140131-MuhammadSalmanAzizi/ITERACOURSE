@@ -98,13 +98,13 @@ const WatchCoursePage = () => {
                 // DB progress overrides localStorage
                 const dbCompletedIds = (dbProgress || []).map(p => p.content_id);
                 const localCompleted = JSON.parse(localStorage.getItem(`course_progress_${id}`) || '[]');
-                
+
                 // STRICT MERGE: If DB has 0 progress, assume account was reset or new enrollment.
                 // Do NOT resurrect local cache.
-                const mergedCompleted = dbProgress && dbProgress.length === 0 
-                    ? [] 
+                const mergedCompleted = dbProgress && dbProgress.length === 0
+                    ? []
                     : [...new Set([...dbCompletedIds, ...localCompleted])];
-                
+
                 setCompletedContents(mergedCompleted);
                 localStorage.setItem(`course_progress_${id}`, JSON.stringify(mergedCompleted));
 
@@ -112,12 +112,12 @@ const WatchCoursePage = () => {
                 const dbScores = {};
                 (dbQuizAttempts || []).forEach(a => { dbScores[a.content_id] = a.score; });
                 const localScores = JSON.parse(localStorage.getItem(`course_scores_${id}`) || '{}');
-                
+
                 // STRICT MERGE for scores too
                 const mergedScores = dbQuizAttempts && dbQuizAttempts.length === 0
                     ? {}
                     : { ...localScores, ...dbScores };
-                    
+
                 setExerciseScores(mergedScores);
                 localStorage.setItem(`course_scores_${id}`, JSON.stringify(mergedScores));
             }
@@ -709,12 +709,15 @@ const WatchCoursePage = () => {
                                                         }}
                                                         style={chapterLocked ? { opacity: 0.45, cursor: 'not-allowed' } : {}}
                                                     >
-                                                        <div className="content-icon">
-                                                            {chapterLocked ? (
-                                                                <Lock size={16} style={{ color: 'var(--text-muted)' }} />
-                                                            ) : isActive ? (
-                                                                <div className="playing-indicator">{getContentIcon(content.type)}</div>
-                                                            ) : getContentIcon(content.type)}
+                                                        <div className="content-item-left">
+                                                            <div className="content-icon">
+                                                                {chapterLocked ? (
+                                                                    <Lock size={16} style={{ color: 'var(--text-muted)' }} />
+                                                                ) : isActive ? (
+                                                                    <div className="playing-indicator">{getContentIcon(content.type)}</div>
+                                                                ) : getContentIcon(content.type)}
+                                                            </div>
+                                                            <span className="content-title" title={content.title}>{content.title}</span>
                                                         </div>
                                                         <div className="content-details">
                                                             <span className="content-title">{content.title}</span>
