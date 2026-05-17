@@ -224,12 +224,12 @@ const CourseDetailPage = () => {
             {/* Course Header */}
             <section className="course-header">
                 <div className="container">
-                    <div className="course-header-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '3rem', alignItems: 'start' }}>
+                    <Link to="/courses" className="back-link">
+                        <ArrowLeft size={20} />
+                        Kembali
+                    </Link>
+                    <div className="course-header-grid">
                         <div className="course-header-content">
-                            <Link to="/courses" className="back-link">
-                                <ArrowLeft size={30} />
-                                Kembali
-                            </Link>
 
                             <h1>{course.title}</h1>
                             <p className="course-subtitle">{course.description}</p>

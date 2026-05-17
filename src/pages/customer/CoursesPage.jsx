@@ -27,6 +27,18 @@ const CoursesPage = () => {
         loadData();
     }, []);
 
+    // Prevent background scrolling when mobile filter is open
+    useEffect(() => {
+        if (showFilters) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showFilters]);
+
     const loadData = async () => {
         try {
             const [{ data: coursesData }, { data: catsData }] = await Promise.all([

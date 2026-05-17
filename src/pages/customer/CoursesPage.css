@@ -127,11 +127,15 @@
     color: var(--primary-300);
 }
 
-.filter-group {
+.courses-page .filter-group {
     margin-bottom: 1.5rem;
+    display: block;
+    width: 100%;
 }
 
-.filter-group h4 {
+.courses-page .filter-group h4 {
+    display: block;
+    width: 100%;
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-secondary);
@@ -140,9 +144,11 @@
     letter-spacing: 0.05em;
 }
 
-.filter-options {
+.courses-page .filter-options {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    clear: both;
     gap: 0.5rem;
 }
 
@@ -518,18 +524,29 @@
 @media (max-width: 1024px) {
     .courses-layout {
         grid-template-columns: 1fr;
+        margin-top: 0;
+        padding-top: 0;
+    }
+    
+    .page-header {
+        margin-bottom: 1rem;
     }
 
     .filters-sidebar {
         display: none;
         position: fixed;
-        top: 72px;
+        top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        z-index: 50;
+        height: 100dvh;
+        max-height: 100%;
+        z-index: 9999;
         border-radius: 0;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        background: var(--bg-primary);
+        padding-bottom: 5rem; /* Ensure bottom content is accessible above mobile nav bars */
     }
 
     .filters-sidebar.show {
@@ -539,7 +556,7 @@
     .filter-toggle {
         display: flex;
     }
-    
+
     .close-filters-mobile {
         display: flex;
         align-items: center;
@@ -548,17 +565,57 @@
 }
 
 @media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem 0 1rem;
+        margin-bottom: 0;
+    }
+    
+    .courses-layout {
+        margin-top: 0;
+        padding-top: 0;
+        gap: 1rem; /* Reduce grid gap just in case */
+    }
+
+    .page-header-content p {
+        display: none;
+    }
+
+    .search-bar {
+        margin: 1rem 1rem 0;
+    }
+
     .courses-toolbar {
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 0;
+        padding-top: 0;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+        width: 100%;
+        gap: 0;
+    }
+
+    .filter-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sort-dropdown,
+    .sort-select {
+        width: 100%;
+    }
+
+    .view-toggle,
+    .results-count {
+        display: none;
     }
 
     .courses-grid.grid {
         /* Let auto-fill handle it until 600px */
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    }
-    
-    .search-bar {
-        margin: 2rem 1rem 0;
     }
 }
 

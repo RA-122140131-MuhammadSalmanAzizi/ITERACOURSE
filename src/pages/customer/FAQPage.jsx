@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import './FAQPage.css';
 
 // FAQ data matching the admin panel
@@ -113,12 +115,57 @@ const categories = [
 ];
 
 const FAQPage = () => {
+    const { profile } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('Semua');
     const [expandedId, setExpandedId] = useState(null);
     const carouselRef = useRef(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
+
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [messageTitle, setMessageTitle] = useState('');
+    const [messageText, setMessageText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!profile) {
+            alert("Anda harus login untuk mengirim pesan.");
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            // Fetch admins
+            const { data: admins, error: adminErr } = await supabase.from('profiles').select('id').eq('role', 'admin');
+            if (adminErr) throw adminErr;
+
+            if (admins && admins.length > 0) {
+                const notifications = admins.map(admin => ({
+                    user_id: admin.id,
+                    sender_id: profile.id,
+                    title: `Pesan dari ${profile.full_name || 'User'} (${profile.email}): ${messageTitle}`,
+                    message: messageText,
+                    type: 'info',
+                    is_read: false
+                }));
+
+                const { error: insertErr } = await supabase.from('notifications').insert(notifications);
+                if (insertErr) throw insertErr;
+                
+                alert('Pesan berhasil dikirim ke Admin!');
+                setShowContactModal(false);
+                setMessageTitle('');
+                setMessageText('');
+            } else {
+                alert('Tidak ada Admin yang ditemukan.');
+            }
+        } catch (err) {
+            console.error('Error sending message:', err);
+            alert('Gagal mengirim pesan.');
+        }
+        setIsSubmitting(false);
+    };
 
     const filteredFaqs = faqData.filter(faq => {
         const matchSearch = faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -291,14 +338,71 @@ const FAQPage = () => {
                         </div>
                         <h3>Masih punya pertanyaan?</h3>
                         <p>Jika Anda tidak menemukan jawaban yang dicari, jangan ragu untuk menghubungi tim support kami.</p>
-                        <a href="mailto:support@iteracourse.ac.id" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button onClick={() => {
+                            if (!profile) {
+                                alert("Silakan login terlebih dahulu untuk menghubungi Admin.");
+                                return;
+                            }
+                            setShowContactModal(true);
+                        }} className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                             Hubungi Kami
-                        </a>
+                        </button>
                     </div>
                 </div>
             </section>
 
             <Footer />
+
+            {/* Modal Hubungi Kami */}
+            {showContactModal && (
+                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="modal-content" style={{ background: 'var(--bg-primary)', borderRadius: '12px', width: '100%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', position: 'relative' }}>
+                        <div className="modal-header" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--text-primary)' }}>Kirim Pesan ke Admin</h2>
+                            <button onClick={() => setShowContactModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSendMessage} style={{ padding: '1.5rem' }}>
+                            <div style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                <p style={{ margin: 0, fontSize: '0.9rem', color: '#3b82f6' }}>
+                                    Pesan Anda akan masuk ke Inbox Admin dan segera ditindaklanjuti.
+                                </p>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Judul Pesan</label>
+                                <input 
+                                    type="text" 
+                                    className="input" 
+                                    value={messageTitle} 
+                                    onChange={(e) => setMessageTitle(e.target.value)} 
+                                    placeholder="Contoh: Bantuan pendaftaran kursus"
+                                    required 
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>Isi Pesan</label>
+                                <textarea 
+                                    className="input" 
+                                    rows={5} 
+                                    value={messageText} 
+                                    onChange={(e) => setMessageText(e.target.value)} 
+                                    placeholder="Tuliskan pertanyaan atau kendala Anda secara detail..."
+                                    required 
+                                    style={{ width: '100%', resize: 'vertical' }}
+                                ></textarea>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                                <button type="button" className="btn btn-outline" onClick={() => setShowContactModal(false)}>Batal</button>
+                                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                                    {isSubmitting ? 'Mengirim...' : 'Kirim Pesan'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

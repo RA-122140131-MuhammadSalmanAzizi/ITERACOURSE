@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 test_supabase*
+test-supabase*
 # Environment variables
 .env
 .env.local
