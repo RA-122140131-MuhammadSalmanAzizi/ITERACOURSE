@@ -1,16 +1,36 @@
-# React + Vite
+# 📚 ITERA Course Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Platform e-learning premium yang dirancang khusus untuk civitas akademik ITERA. Dibangun menggunakan React, Vite, dan Supabase.
 
-Currently, two official plugins are available:
+## 🚀 Panduan Setup Lokal (Untuk Kolaborator)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Jika Anda baru saja melakukan clone repositori ini, ikuti langkah berikut:
 
-## React Compiler
+1. **Instalasi Package**
+   ```bash
+   npm install
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. **Konfigurasi Environment**
+   Buat file `.env.local` di root folder dan masukkan API Key Supabase (minta ke Admin jika belum punya):
+   ```env
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key
+   ```
 
-## Expanding the ESLint configuration
+3. **Jalankan Aplikasi**
+   ```bash
+   npm run dev
+   ```
+   Aplikasi akan berjalan di `http://localhost:5173`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🌍 Alur Deployment
+Saat ini deployment dilakukan secara manual melalui Vercel CLI atau otomatis jika sudah dihubungkan ke GitHub.
+- **Production**: `vercel --prod`
+
+## 🛠️ Stack Teknologi
+- **Frontend**: React.js & Vite
+- **Styling**: Vanilla CSS (Premium Custom Design)
+- **Backend/Database**: Supabase (PostgreSQL)
+- **Authentication**: Google OAuth via Supabase
+- **Icons**: Lucide React

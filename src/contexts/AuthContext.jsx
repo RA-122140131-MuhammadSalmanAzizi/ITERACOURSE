@@ -211,6 +211,21 @@ export const AuthProvider = ({ children }) => {
   // ===== LOGOUT =====
   const logout = async () => {
     try {
+      // Clean up user-specific localStorage data before signing out
+      // This prevents data leaking between different user sessions
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (
+          key.startsWith('course_progress_') ||
+          key.startsWith('course_scores_') ||
+          key.startsWith('course_completed_modal_')
+        ) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
       await authService.signOut();
       setSession(null);
       setUser(null);

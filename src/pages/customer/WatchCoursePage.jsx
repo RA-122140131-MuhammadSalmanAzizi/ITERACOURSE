@@ -74,6 +74,53 @@ const WatchCoursePage = () => {
                 });
             }
             setChapters(chaptersData || []);
+
+            // === INDUSTRY STANDARD: Load progress from DB (Single Source of Truth) ===
+            if (profile) {
+                const allContentIds = (chaptersData || []).flatMap(ch =>
+                    (ch.contents || []).map(c => c.id)
+                );
+
+                // Fetch completed content from database
+                const { data: dbProgress } = await supabase
+                    .from('content_progress')
+                    .select('content_id')
+                    .eq('user_id', profile.id)
+                    .in('content_id', allContentIds.length > 0 ? allContentIds : ['00000000-0000-0000-0000-000000000000']);
+
+                // Fetch quiz scores from database
+                const { data: dbQuizAttempts } = await supabase
+                    .from('quiz_attempts')
+                    .select('content_id, score')
+                    .eq('user_id', profile.id)
+                    .in('content_id', allContentIds.length > 0 ? allContentIds : ['00000000-0000-0000-0000-000000000000']);
+
+                // DB progress overrides localStorage
+                const dbCompletedIds = (dbProgress || []).map(p => p.content_id);
+                const localCompleted = JSON.parse(localStorage.getItem(`course_progress_${id}`) || '[]');
+                
+                // STRICT MERGE: If DB has 0 progress, assume account was reset or new enrollment.
+                // Do NOT resurrect local cache.
+                const mergedCompleted = dbProgress && dbProgress.length === 0 
+                    ? [] 
+                    : [...new Set([...dbCompletedIds, ...localCompleted])];
+                
+                setCompletedContents(mergedCompleted);
+                localStorage.setItem(`course_progress_${id}`, JSON.stringify(mergedCompleted));
+
+                // DB quiz scores override localStorage
+                const dbScores = {};
+                (dbQuizAttempts || []).forEach(a => { dbScores[a.content_id] = a.score; });
+                const localScores = JSON.parse(localStorage.getItem(`course_scores_${id}`) || '{}');
+                
+                // STRICT MERGE for scores too
+                const mergedScores = dbQuizAttempts && dbQuizAttempts.length === 0
+                    ? {}
+                    : { ...localScores, ...dbScores };
+                    
+                setExerciseScores(mergedScores);
+                localStorage.setItem(`course_scores_${id}`, JSON.stringify(mergedScores));
+            }
         } catch (err) {
             console.error(err);
         }
@@ -162,14 +209,25 @@ const WatchCoursePage = () => {
         // Video requires 50% watch time; exercise requires passing score
         if (['pdf', 'link'].includes(currentContent.type)) {
             if (!completedContents.includes(currentContent.id)) {
+                // Save to local state and localStorage
                 setCompletedContents(prev => {
                     const newCompleted = [...prev, currentContent.id];
                     if (id) localStorage.setItem(`course_progress_${id}`, JSON.stringify(newCompleted));
                     return newCompleted;
                 });
+
+                // === INDUSTRY STANDARD: Save to DB ===
+                supabase.from('content_progress').upsert({
+                    user_id: profile.id,
+                    content_id: currentContent.id,
+                    is_completed: true,
+                    completed_at: new Date().toISOString()
+                }).then(({ error }) => {
+                    if (error) console.error('Error saving content progress to DB:', error);
+                });
             }
         }
-    }, [currentContentIndex, currentContent?.id, id, completedContents]);
+    }, [currentContentIndex, currentContent?.id, id, completedContents, profile]);
 
     // Reset video tracking state when content changes
     useEffect(() => {
@@ -332,6 +390,17 @@ const WatchCoursePage = () => {
 
         if (score >= 80) {
             setCompletedContents(prev => [...prev, currentContent.id]);
+            // Save to DB
+            if (profile) {
+                supabase.from('content_progress').upsert({
+                    user_id: profile.id,
+                    content_id: currentContent.id,
+                    is_completed: true,
+                    completed_at: new Date().toISOString()
+                }).then(({ error }) => {
+                    if (error) console.error('Error saving exercise progress to DB:', error);
+                });
+            }
         }
     };
 

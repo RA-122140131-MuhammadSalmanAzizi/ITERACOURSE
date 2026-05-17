@@ -6,7 +6,7 @@
     background: var(--bg-primary);
 }
 
-/* Header */
+/* Our Header */
 .watch-header {
     display: flex;
     justify-content: space-between;
