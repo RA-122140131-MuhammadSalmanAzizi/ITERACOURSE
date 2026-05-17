@@ -1085,6 +1085,13 @@
 
     .hero-actions {
         flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+    }
+    
+    .hero-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .featured-grid {
@@ -1097,6 +1104,13 @@
 
     .cta-actions {
         flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+    }
+    
+    .cta-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
@@ -1478,4 +1492,40 @@
 [data-theme="light"] .testimonial-card {
     background: #FFFFFF;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* Extra small devices fix (less than 380px) */
+@media (max-width: 380px) {
+    .hero-container {
+        padding: 2.5rem 1rem;
+    }
+    .hero-title {
+        font-size: 1.75rem;
+        word-wrap: break-word;
+    }
+    .hero-card.certificate-verify-card {
+        padding: 1.5rem 1rem;
+    }
+    .certificate-verify-input {
+        padding: 0.75rem 1rem;
+    }
+    .certificate-verify-input input {
+        font-size: 0.875rem;
+    }
+    .hero-stats {
+        padding: 1rem;
+    }
+    .stat-item {
+        min-width: 100px;
+    }
+    .cta-card {
+        padding: 2rem 1rem;
+    }
+    .why-card {
+        padding: 1.5rem 1rem;
+    }
+    .category-card {
+        width: 160px;
+        padding: 1rem;
+    }
 }
