@@ -5,6 +5,8 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import * as dosenRequestService from '../../services/dosenRequestService';
 import CustomerSidebar from '../../components/CustomerSidebar';
+import AdminSidebar from '../../components/AdminSidebar';
+import DosenSidebar from '../../components/DosenSidebar';
 import '../admin/AdminPages.css';
 
 const ProfilePage = () => {
@@ -117,10 +119,18 @@ const ProfilePage = () => {
         overflow: 'hidden',
     };
 
+    const getPageClass = () => profile?.role === 'dosen' ? 'dosen-page' : 'admin-page';
+    const getMainClass = () => profile?.role === 'dosen' ? 'dosen-main' : 'admin-main';
+    const renderSidebar = () => {
+        if (profile?.role === 'admin') return <AdminSidebar />;
+        if (profile?.role === 'dosen') return <DosenSidebar />;
+        return <CustomerSidebar />;
+    };
+
     return (
-        <div className="admin-page">
-            <CustomerSidebar />
-            <main className="admin-main">
+        <div className={getPageClass()}>
+            {renderSidebar()}
+            <main className={getMainClass()}>
                 <header className="admin-header">
                     <div>
                         <h1>Profil Saya</h1>

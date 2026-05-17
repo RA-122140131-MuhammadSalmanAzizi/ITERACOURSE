@@ -253,7 +253,7 @@ const CertificatesPage = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="certificate-modal-footer" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                        <div className="certificate-modal-footer" style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
                             <button
                                 onClick={() => handleCopy(selectedCertificate.code)}
                                 className="btn cert-modal-btn"
