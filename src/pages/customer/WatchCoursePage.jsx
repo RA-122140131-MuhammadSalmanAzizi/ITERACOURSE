@@ -640,18 +640,19 @@ const WatchCoursePage = () => {
                                                         }}
                                                         style={chapterLocked ? { opacity: 0.45, cursor: 'not-allowed' } : {}}
                                                     >
-                                                        <div className="content-icon">
-                                                            {chapterLocked ? (
-                                                                <Lock size={16} style={{ color: 'var(--text-muted)' }} />
-                                                            ) : isActive ? (
-                                                                <div className="playing-indicator">{getContentIcon(content.type)}</div>
-                                                            ) : getContentIcon(content.type)}
+                                                        <div className="content-item-left">
+                                                            <div className="content-icon">
+                                                                {chapterLocked ? (
+                                                                    <Lock size={16} style={{ color: 'var(--text-muted)' }} />
+                                                                ) : isActive ? (
+                                                                    <div className="playing-indicator">{getContentIcon(content.type)}</div>
+                                                                ) : getContentIcon(content.type)}
+                                                            </div>
+                                                            <span className="content-title" title={content.title}>{content.title}</span>
                                                         </div>
-                                                        <div className="content-details">
-                                                            <span className="content-title">{content.title}</span>
-                                                            <div className="content-meta-info">
-                                                                <span className={`type-label ${content.type}`}>{getContentTypeLabel(content.type)}</span>
-                                                                {content.duration && <span className="content-duration">{content.duration}</span>}
+                                                        <div className="content-item-right">
+                                                            <span className={`type-label ${content.type}`}>{getContentTypeLabel(content.type)}</span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                                                 {!chapterLocked && content.type === 'exercise' && exerciseScore !== undefined && (
                                                                     <span className={`score-badge ${exerciseScore >= 80 ? 'passed' : 'failed'}`}>{exerciseScore}%</span>
                                                                 )}
