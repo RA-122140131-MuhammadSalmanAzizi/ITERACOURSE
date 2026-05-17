@@ -720,7 +720,6 @@ const WatchCoursePage = () => {
                                                             <span className="content-title">{content.title}</span>
                                                             <div className="content-meta-info">
                                                                 <span className={`type-label ${content.type}`}>{getContentTypeLabel(content.type)}</span>
-                                                                {content.duration && <span className="content-duration">{content.duration}</span>}
                                                                 {!chapterLocked && content.type === 'exercise' && exerciseScore !== undefined && (
                                                                     <span className={`score-badge ${exerciseScore >= 80 ? 'passed' : 'failed'}`}>{exerciseScore}%</span>
                                                                 )}
