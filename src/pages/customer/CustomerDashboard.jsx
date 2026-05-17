@@ -91,7 +91,7 @@ const CustomerDashboard = () => {
                 <header className="admin-header">
                     <div>
                         <h1>Dashboard</h1>
-                        <p>Selamat datang, {profile?.full_name}! 👋</p>
+                        <p>Selamat datang, {profile?.full_name}!</p>
                     </div>
                     <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <span className="date-display">

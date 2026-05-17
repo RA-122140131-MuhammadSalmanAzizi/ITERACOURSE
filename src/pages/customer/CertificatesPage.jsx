@@ -247,7 +247,7 @@ const CertificatesPage = () => {
                                 <p>Instruktur: {selectedCertificate.course?.instructor?.full_name}</p>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                        <p style={{ margin: 0 }}><strong>Kode Sertifikat:</strong> {selectedCertificate.code}</p>
+                                        <p style={{ margin: 0, wordBreak: 'break-all' }}><strong>Kode Sertifikat:</strong> {selectedCertificate.code}</p>
                                     </div>
                                     <p style={{ margin: 0 }}><strong>Tanggal Diterbitkan:</strong> {new Date(selectedCertificate.issued_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                 </div>
@@ -256,7 +256,7 @@ const CertificatesPage = () => {
                         <div className="certificate-modal-footer" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
                             <button
                                 onClick={() => handleCopy(selectedCertificate.code)}
-                                className="btn"
+                                className="btn cert-modal-btn"
                                 style={{
                                     background: copied ? '#10b981' : 'transparent',
                                     color: copied ? 'white' : 'var(--text-primary)',
@@ -264,15 +264,19 @@ const CertificatesPage = () => {
                                     display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s'
                                 }}
                             >
-                                {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Kode Tersalin!' : 'Salin Kode'}
+                                {copied ? <Check size={16} /> : <Copy size={16} />} 
+                                <span className="cert-hide-mobile">{copied ? 'Kode Tersalin!' : 'Salin Kode'}</span>
+                                <span className="cert-show-mobile">{copied ? 'Tersalin' : 'Copy'}</span>
                             </button>
                             <button
-                                className="btn btn-primary"
+                                className="btn btn-primary cert-modal-btn"
                                 onClick={handleDownload}
                                 disabled={downloading}
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: downloading ? 0.7 : 1 }}
                             >
-                                <Download size={16} /> {downloading ? 'Memproses...' : 'Download Sertifikat'}
+                                <Download size={16} /> 
+                                <span className="cert-hide-mobile">{downloading ? 'Memproses...' : 'Download Sertifikat'}</span>
+                                <span className="cert-show-mobile">{downloading ? 'Proses...' : 'Download'}</span>
                             </button>
                         </div>
 
