@@ -85,12 +85,27 @@ const Navbar = () => {
     return (
         <nav className="navbar">
             <div className="navbar-container">
-                <Link to="/" className="navbar-logo">
-                    <div className="logo-icon" style={{ background: 'transparent' }}>
-                        <img src="/Logo_ITERA.png" alt="ITERA" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    </div>
-                    <span className="logo-text">{isHomePage ? 'ITERA Course' : 'Back to Site'}</span>
-                </Link>
+                <div className="navbar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <button 
+                        className="logo-menu-toggle"
+                        onClick={() => {
+                            if (window.innerWidth <= 768) {
+                                setIsMenuOpen(!isMenuOpen);
+                            } else {
+                                navigate('/');
+                            }
+                        }}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+                        aria-label="Toggle Menu"
+                    >
+                        <div className="logo-icon" style={{ background: 'transparent' }}>
+                            <img src="/Logo_ITERA.png" alt="ITERA" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        </div>
+                    </button>
+                    <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                        <span className="logo-text">{isHomePage ? 'ITERA Course' : 'Back to Site'}</span>
+                    </Link>
+                </div>
 
                 <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
                     <Link to="/courses" className="nav-link">Courses</Link>
@@ -218,12 +233,6 @@ const Navbar = () => {
                         </div>
                     )}
 
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    >
-                        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
                 </div>
             </div>
         </nav>

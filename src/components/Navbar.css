@@ -349,6 +349,8 @@
 
     .mobile-menu-btn {
         display: flex;
+        align-items: center;
+        transform: translateY(-10px);
     }
 }
 
@@ -393,11 +395,11 @@
     .theme-toggle-wrapper {
         display: none !important;
     }
-    
+
     .hide-on-mobile {
         display: none !important;
     }
-    
+
     .mobile-theme-toggle {
         display: flex;
         align-items: center;
