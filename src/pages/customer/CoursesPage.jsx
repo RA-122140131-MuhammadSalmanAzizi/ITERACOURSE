@@ -265,12 +265,6 @@ const CoursesPage = () => {
                                         <Filter size={18} />
                                         Filters
                                     </button>
-                                    <span className="results-count">
-                                        {sortedCourses.length} courses found
-                                    </span>
-                                </div>
-
-                                <div className="toolbar-right">
                                     <div className="sort-dropdown">
                                         <select
                                             value={sortBy}
@@ -285,6 +279,12 @@ const CoursesPage = () => {
                                         </select>
                                         <ChevronDown size={16} className="sort-icon" />
                                     </div>
+                                    <span className="results-count">
+                                        {sortedCourses.length} courses found
+                                    </span>
+                                </div>
+
+                                <div className="toolbar-right">
 
                                     <div className="view-toggle">
                                         <button
