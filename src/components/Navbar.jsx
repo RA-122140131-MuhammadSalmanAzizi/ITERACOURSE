@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
     Menu, X, BookOpen, Award, User, LogOut,
-    ChevronDown, ArrowLeft, Sun, Moon, HelpCircle, Bell
+    ChevronDown, ArrowLeft, Sun, Moon, HelpCircle, Bell, LayoutDashboard
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import './Navbar.css';
@@ -85,12 +85,27 @@ const Navbar = () => {
     return (
         <nav className="navbar">
             <div className="navbar-container">
-                <Link to="/" className="navbar-logo">
-                    <div className="logo-icon" style={{ background: 'transparent' }}>
-                        <img src="/Logo_ITERA.png" alt="ITERA" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    </div>
-                    <span className="logo-text">{isHomePage ? 'ITERA Course' : 'Back to Site'}</span>
-                </Link>
+                <div className="navbar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <button 
+                        className="logo-menu-toggle"
+                        onClick={() => {
+                            if (window.innerWidth <= 768) {
+                                setIsMenuOpen(!isMenuOpen);
+                            } else {
+                                navigate('/');
+                            }
+                        }}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+                        aria-label="Toggle Menu"
+                    >
+                        <div className="logo-icon" style={{ background: 'transparent' }}>
+                            <img src="/Logo_ITERA.png" alt="ITERA" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        </div>
+                    </button>
+                    <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                        <span className="logo-text">{isHomePage ? 'ITERA Course' : 'Back to Site'}</span>
+                    </Link>
+                </div>
 
                 <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
                     <Link to="/courses" className="nav-link">Courses</Link>
@@ -109,6 +124,16 @@ const Navbar = () => {
                             Why Us
                         </button>
                     )}
+                    
+                    {/* Theme Toggle Button for Mobile Only */}
+                    <div className="mobile-theme-toggle">
+                        <button className="theme-toggle-btn" onClick={handleThemeToggle} style={{ width: '100%', borderRadius: '8px', justifyContent: 'center', gap: '0.5rem' }}>
+                             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />} 
+                             <span style={{fontSize: '0.9375rem', fontWeight: 500}}>
+                                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                             </span>
+                        </button>
+                    </div>
                 </div>
 
                 <div className="navbar-actions">
@@ -140,7 +165,7 @@ const Navbar = () => {
 
                     {isAuthenticated && user ? (
                         <>
-                            <Link to={getDashboardLink()} className="btn btn-ghost dashboard-nav-btn" style={{ color: 'var(--primary-500)' }}>
+                            <Link to={getDashboardLink()} className="btn btn-ghost dashboard-nav-btn hide-on-mobile" style={{ color: 'var(--primary-500)' }}>
                                 Dashboard
                             </Link>
                             <div className="profile-dropdown">
@@ -167,6 +192,10 @@ const Navbar = () => {
                                             </div>
                                         </div>
                                         <div className="dropdown-divider"></div>
+                                        <Link to={getDashboardLink()} className="dropdown-item">
+                                            <LayoutDashboard size={16} />
+                                            Dashboard
+                                        </Link>
                                         <Link to="/profile" className="dropdown-item">
                                             <User size={16} />
                                             Profile
@@ -204,12 +233,6 @@ const Navbar = () => {
                         </div>
                     )}
 
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    >
-                        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
                 </div>
             </div>
         </nav>

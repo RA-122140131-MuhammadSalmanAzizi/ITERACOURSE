@@ -89,12 +89,18 @@ const HomePage = () => {
                 .limit(6);
             setPopularCourses(coursesData || []);
 
-            // Fetch categories
+            // Fetch categories and their courses for accurate counts
             const { data: cats } = await supabase
                 .from('categories')
-                .select('*')
+                .select('*, courses(id, status)')
                 .order('name');
-            setCategoriesData(cats || []);
+            
+            const catsWithCounts = cats?.map(cat => ({
+                ...cat,
+                course_count: cat.courses?.filter(c => c.status === 'published').length || 0
+            })) || [];
+            
+            setCategoriesData(catsWithCounts);
 
             // Fetch stats
             const [{ count: userCount }, { count: courseCount }, { count: certCount }] = await Promise.all([
