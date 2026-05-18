@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import {
     Menu, X, BookOpen, Award, User, LogOut,
     ChevronDown, ArrowLeft, Sun, Moon, HelpCircle, Bell, LayoutDashboard
@@ -18,6 +19,7 @@ const Navbar = () => {
         email: authUser.email,
     } : null);
     const { theme, toggleTheme } = useTheme();
+    const { unreadCount } = useNotifications();
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -173,8 +175,20 @@ const Navbar = () => {
                                     className="profile-trigger"
                                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                                 >
-                                    <div className="avatar">
+                                    <div className="avatar" style={{ position: 'relative' }}>
                                         {user.avatar_url && !imgError ? <img src={user.avatar_url} alt="" onError={() => setImgError(true)} style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}} /> : getAvatarInitials()}
+                                        {unreadCount > 0 && (
+                                            <span style={{
+                                                position: 'absolute',
+                                                top: '-2px',
+                                                right: '-2px',
+                                                width: '10px',
+                                                height: '10px',
+                                                background: '#ef4444',
+                                                border: '2px solid var(--bg-card)',
+                                                borderRadius: '50%',
+                                            }} />
+                                        )}
                                     </div>
                                     <span className="profile-name">{user.full_name}</span>
                                     <ChevronDown size={16} />
@@ -206,9 +220,31 @@ const Navbar = () => {
                                                 My Certificates
                                             </Link>
                                         )}
-                                        <Link to="/notifications" className="dropdown-item">
+                                        <Link to="/notifications" className="dropdown-item" style={{ position: 'relative' }}>
                                             <Bell size={16} />
                                             Notifikasi
+                                            {unreadCount > 0 && (
+                                                <span style={{
+                                                    position: 'absolute',
+                                                    right: '12px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: '#ef4444',
+                                                    color: '#fff',
+                                                    fontSize: '0.65rem',
+                                                    fontWeight: 700,
+                                                    minWidth: '18px',
+                                                    height: '18px',
+                                                    borderRadius: '9px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    padding: '0 4px',
+                                                    lineHeight: 1,
+                                                }}>
+                                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                                </span>
+                                            )}
                                         </Link>
                                         <div className="dropdown-divider"></div>
                                         <button onClick={handleLogout} className="dropdown-item logout">

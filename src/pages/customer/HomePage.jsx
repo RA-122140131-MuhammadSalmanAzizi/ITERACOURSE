@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Play, Star, Users, BookOpen, Award, ArrowRight, ArrowUp, ArrowDown,
@@ -74,6 +74,58 @@ const HomePage = () => {
     const [categoriesData, setCategoriesData] = useState([]);
     const [siteStats, setSiteStats] = useState({ totalStudents: 0, totalCourses: 0, totalCertificates: 0 });
 
+    const carouselRef = useRef(null);
+    const isDragging = useRef(false);
+    const startX = useRef(0);
+    const scrollLeft = useRef(0);
+
+    useEffect(() => {
+        const carousel = carouselRef.current;
+        if (!carousel) return;
+
+        let animationId;
+        const scroll = () => {
+            if (!isDragging.current) {
+                if (!carousel.matches(':hover')) {
+                    carousel.scrollLeft += 1;
+                }
+
+                if (carousel.scrollLeft >= carousel.scrollWidth / 2) {
+                    carousel.scrollLeft -= carousel.scrollWidth / 2;
+                } else if (carousel.scrollLeft <= 0) {
+                    carousel.scrollLeft += carousel.scrollWidth / 2;
+                }
+            }
+
+            animationId = requestAnimationFrame(scroll);
+        };
+        animationId = requestAnimationFrame(scroll);
+
+        return () => cancelAnimationFrame(animationId);
+    }, []);
+
+    const handleMouseDown = (e) => {
+        isDragging.current = true;
+        startX.current = e.pageX - carouselRef.current.offsetLeft;
+        scrollLeft.current = carouselRef.current.scrollLeft;
+    };
+
+    const handleMouseLeave = () => {
+        isDragging.current = false;
+    };
+
+    const handleMouseUp = () => {
+        isDragging.current = false;
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDragging.current) return;
+        e.preventDefault();
+        const x = e.pageX - carouselRef.current.offsetLeft;
+        const walk = (x - startX.current) * 1.5;
+        carouselRef.current.scrollLeft = scrollLeft.current - walk;
+    };
+
     useEffect(() => {
         loadHomeData();
     }, []);
@@ -94,12 +146,12 @@ const HomePage = () => {
                 .from('categories')
                 .select('*, courses(id, status)')
                 .order('name');
-            
+
             const catsWithCounts = cats?.map(cat => ({
                 ...cat,
                 course_count: cat.courses?.filter(c => c.status === 'published').length || 0
             })) || [];
-            
+
             setCategoriesData(catsWithCounts);
 
             // Fetch stats
@@ -173,12 +225,14 @@ const HomePage = () => {
                     .maybeSingle();
 
                 if (cert) {
-                    setVerifyResult({ found: true, certificate: {
-                        id: cert.code,
-                        courseName: cert.course?.title,
-                        userName: cert.user?.full_name,
-                        issuedDate: cert.issued_at,
-                    }});
+                    setVerifyResult({
+                        found: true, certificate: {
+                            id: cert.code,
+                            courseName: cert.course?.title,
+                            userName: cert.user?.full_name,
+                            issuedDate: cert.issued_at,
+                        }
+                    });
                 } else {
                     setVerifyResult({ found: false });
                 }
@@ -221,7 +275,7 @@ const HomePage = () => {
                                 Explore Courses
                                 <ArrowRight size={20} />
                             </Link>
-                        <Link to="/login" className="btn btn-white btn-lg">
+                            <Link to="/login" className="btn btn-white btn-lg">
                                 Login
                             </Link>
                         </div>
@@ -233,9 +287,9 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                    <CountUp end={siteStats.totalStudents} formatter={formatNumber} />+
+                                        <CountUp end={siteStats.totalStudents} formatter={formatNumber} />+
                                     </p>
-                                    <p className="stat-label">Students</p>
+                                    <p className="stat-label">Users</p>
                                 </div>
                             </div>
                             <div className="stat-divider"></div>
@@ -245,7 +299,7 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                    <CountUp end={siteStats.totalCourses} formatter={formatNumber} />+
+                                        <CountUp end={siteStats.totalCourses} formatter={formatNumber} />+
                                     </p>
                                     <p className="stat-label">Courses</p>
                                 </div>
@@ -257,7 +311,7 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                    <CountUp end={siteStats.totalCertificates} formatter={formatNumber} />+
+                                        <CountUp end={siteStats.totalCertificates} formatter={formatNumber} />+
                                     </p>
                                     <p className="stat-label">Certificates</p>
                                 </div>
@@ -355,15 +409,23 @@ const HomePage = () => {
                         <p>Find the perfect course in your favorite category</p>
                     </div>
                 </div>
-                <div className="categories-carousel">
+                <div
+                    className="categories-carousel"
+                    ref={carouselRef}
+                    onMouseDown={handleMouseDown}
+                    onMouseLeave={handleMouseLeave}
+                    onMouseUp={handleMouseUp}
+                    onMouseMove={handleMouseMove}
+                >
                     <div className="categories-track">
-                        {[...categoriesData, ...categoriesData].map((category, index) => {
+                        {[...categoriesData, ...categoriesData, ...categoriesData, ...categoriesData].map((category, index) => {
                             const IconComponent = iconMap[category.icon] || BookOpen;
                             return (
                                 <Link
                                     to={`/courses?category=${category.name}`}
                                     key={`${category.id}-${index}`}
                                     className="category-card"
+                                    draggable="false"
                                 >
                                     <div className="category-icon">
                                         <IconComponent size={28} />

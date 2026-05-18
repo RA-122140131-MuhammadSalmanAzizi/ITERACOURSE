@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import '../pages/admin/AdminPages.css';
 
 const AdminSidebar = () => {
@@ -13,6 +14,7 @@ const AdminSidebar = () => {
     const navigate = useNavigate();
     const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { unreadCount } = useNotifications();
     const [imgError, setImgError] = useState(false);
 
     const handleLogout = () => {
@@ -65,6 +67,32 @@ const AdminSidebar = () => {
                     <LayoutDashboard size={20} />
                     Dashboard
                 </Link>
+                <Link to="/notifications" className={`nav-item ${isActive('/notifications') ? 'active' : ''}`} style={{ position: 'relative' }}>
+                    <Bell size={20} />
+                    Notifikasi
+                    {unreadCount > 0 && (
+                        <span style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: '#ef4444',
+                            color: '#fff',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            minWidth: '18px',
+                            height: '18px',
+                            borderRadius: '9px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 4px',
+                            lineHeight: 1,
+                        }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    )}
+                </Link>
                 <Link to="/admin/settings" className={`nav-item ${isActive('/admin/settings') ? 'active' : ''}`}>
                     <Settings size={20} />
                     Course Settings
@@ -80,10 +108,6 @@ const AdminSidebar = () => {
                 <Link to="/admin/users" className={`nav-item ${isActive('/admin/users') ? 'active' : ''}`}>
                     <Users size={20} />
                     Users
-                </Link>
-                <Link to="/notifications" className={`nav-item ${isActive('/notifications') ? 'active' : ''}`}>
-                    <Bell size={20} />
-                    Notifikasi
                 </Link>
                 <Link to="/admin/faq" className={`nav-item ${isActive('/admin/faq') ? 'active' : ''}`}>
                     <HelpCircle size={20} />
