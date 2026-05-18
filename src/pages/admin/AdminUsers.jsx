@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import {
     Search, Edit, UserX, UserCheck, CheckCircle, XCircle,
     Clock, AlertCircle, ChevronDown, X
@@ -25,6 +26,11 @@ const AdminUsers = () => {
     const [showRoleModal, setShowRoleModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [newRole, setNewRole] = useState('');
+
+    // Add Dosen state
+    const [showAddDosenModal, setShowAddDosenModal] = useState(false);
+    const [newDosenData, setNewDosenData] = useState({ fullName: '', email: '' });
+    const [addingDosen, setAddingDosen] = useState(false);
 
     // Review modal state
     const [showReviewModal, setShowReviewModal] = useState(false);
@@ -93,6 +99,54 @@ const AdminUsers = () => {
             alert('Gagal mengubah role: ' + err.message);
         }
         setProcessing(false);
+    };
+
+    // ===== Add Dosen =====
+    const handleAddDosen = async (e) => {
+        e.preventDefault();
+        if (!newDosenData.fullName || !newDosenData.email) {
+            alert('Harap isi semua field');
+            return;
+        }
+        setAddingDosen(true);
+        try {
+            // Gunakan client sementara agar tidak melogout admin yang sedang login
+            const tempClient = createClient(
+                import.meta.env.VITE_SUPABASE_URL,
+                import.meta.env.VITE_SUPABASE_ANON_KEY,
+                { auth: { persistSession: false, autoRefreshToken: false } }
+            );
+
+            // Generate random password as password is no longer manually entered
+            const randomPassword = Math.random().toString(36).slice(-10) + 'A1!@';
+
+            const { data, error } = await tempClient.auth.signUp({
+                email: newDosenData.email,
+                password: randomPassword,
+                options: {
+                    data: {
+                        full_name: newDosenData.fullName,
+                    }
+                }
+            });
+
+            if (error) throw error;
+            if (!data.user) throw new Error('Gagal membuat user');
+
+            // Tunggu sebentar agar trigger profile selesai berjalan di Supabase
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Ubah role user menjadi dosen menggunakan token Admin
+            await authService.updateUserRole(data.user.id, 'dosen');
+
+            alert('Dosen berhasil ditambahkan!');
+            setShowAddDosenModal(false);
+            setNewDosenData({ fullName: '', email: '' });
+            fetchUsers();
+        } catch (err) {
+            alert('Gagal menambahkan dosen: ' + err.message);
+        }
+        setAddingDosen(false);
     };
 
     // ===== Toggle Active Status =====
@@ -259,6 +313,13 @@ const AdminUsers = () => {
                                 <option value="dosen">Dosen</option>
                                 <option value="admin">Admin</option>
                             </select>
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => setShowAddDosenModal(true)}
+                                style={{ marginLeft: 'auto' }}
+                            >
+                                + Tambah Dosen
+                            </button>
                         </div>
 
                         {loadingUsers ? (
@@ -587,6 +648,89 @@ const AdminUsers = () => {
                                     {processing ? '...' : 'Setujui'}
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Add Dosen Modal */}
+                {showAddDosenModal && (
+                    <div style={{
+                        position: 'fixed', inset: 0, zIndex: 1000,
+                        background: 'rgba(0,0,0,0.6)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', padding: '1rem',
+                    }}>
+                        <div style={{
+                            background: 'var(--bg-secondary)', borderRadius: '16px',
+                            padding: '1.5rem', maxWidth: '400px', width: '100%',
+                            border: '1px solid var(--border-color)',
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Tambah Dosen Baru</h3>
+                                <button onClick={() => setShowAddDosenModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleAddDosen}>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Nama Lengkap</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={newDosenData.fullName}
+                                        onChange={(e) => setNewDosenData({ ...newDosenData, fullName: e.target.value })}
+                                        style={{
+                                            width: '100%', padding: '0.75rem', borderRadius: '8px',
+                                            border: '1px solid var(--border-color)', background: 'var(--bg-primary)',
+                                            color: 'var(--text-primary)', fontSize: '0.95rem'
+                                        }}
+                                        placeholder="Contoh: Dr. Asep Sudarman"
+                                    />
+                                </div>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Email</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={newDosenData.email}
+                                        onChange={(e) => setNewDosenData({ ...newDosenData, email: e.target.value })}
+                                        style={{
+                                            width: '100%', padding: '0.75rem', borderRadius: '8px',
+                                            border: '1px solid var(--border-color)', background: 'var(--bg-primary)',
+                                            color: 'var(--text-primary)', fontSize: '0.95rem'
+                                        }}
+                                        placeholder="nama.dosen@ki.itera.ac.id"
+                                    />
+                                </div>
+                                <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', borderLeft: '3px solid #3b82f6' }}>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                        Dosen dapat langsung masuk menggunakan opsi <strong>'Login with Google'</strong> dengan email ITERA yang didaftarkan di atas.
+                                    </p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddDosenModal(false)}
+                                        style={{
+                                            padding: '0.5rem 1rem', borderRadius: '8px',
+                                            border: '1px solid var(--border-color)', background: 'none',
+                                            color: 'var(--text-primary)', cursor: 'pointer',
+                                        }}
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={addingDosen}
+                                        style={{
+                                            padding: '0.5rem 1rem', borderRadius: '8px', border: 'none',
+                                            background: 'var(--primary-500)', color: '#fff',
+                                            cursor: addingDosen ? 'wait' : 'pointer', opacity: addingDosen ? 0.5 : 1,
+                                        }}
+                                    >
+                                        {addingDosen ? 'Menambahkan...' : 'Tambah Dosen'}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}
