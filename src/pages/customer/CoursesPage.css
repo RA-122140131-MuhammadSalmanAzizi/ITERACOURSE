@@ -595,18 +595,29 @@
 
     .toolbar-left,
     .toolbar-right {
-        width: 100%;
-        gap: 0;
+        display: contents;
     }
 
     .filter-toggle {
+        grid-column: 1;
         width: 100%;
         justify-content: center;
+        padding: 0.5rem;
+        font-size: 0.875rem;
     }
 
-    .sort-dropdown,
+    .sort-dropdown {
+        grid-column: 2;
+        width: 100%;
+    }
+
     .sort-select {
         width: 100%;
+        padding: 0.5rem 2rem 0.5rem 0.5rem;
+        font-size: 0.875rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
     .view-toggle,
