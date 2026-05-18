@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import '../pages/dosen/DosenPages.css';
 
 const DosenSidebar = () => {
@@ -12,6 +13,7 @@ const DosenSidebar = () => {
     const navigate = useNavigate();
     const { profile, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { unreadCount } = useNotifications();
     const [imgError, setImgError] = useState(false);
 
     const handleLogout = () => {
@@ -64,6 +66,32 @@ const DosenSidebar = () => {
                     <BarChart2 size={20} />
                     Dashboard
                 </Link>
+                <Link to="/notifications" className={`nav-item ${isActive('/notifications') ? 'active' : ''}`} style={{ position: 'relative' }}>
+                    <Bell size={20} />
+                    Notifikasi
+                    {unreadCount > 0 && (
+                        <span style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: '#ef4444',
+                            color: '#fff',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            minWidth: '18px',
+                            height: '18px',
+                            borderRadius: '9px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 4px',
+                            lineHeight: 1,
+                        }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    )}
+                </Link>
                 <Link to="/dosen/courses" className={`nav-item ${isActive('/dosen/courses') ? 'active' : ''}`}>
                     <BookOpen size={20} />
                     My Courses
@@ -71,10 +99,6 @@ const DosenSidebar = () => {
                 <Link to="/dosen/upload" className={`nav-item ${isActive('/dosen/upload') ? 'active' : ''}`}>
                     <Plus size={20} />
                     Upload Course
-                </Link>
-                <Link to="/notifications" className={`nav-item ${isActive('/notifications') ? 'active' : ''}`}>
-                    <Bell size={20} />
-                    Notifikasi
                 </Link>
             </nav>
 

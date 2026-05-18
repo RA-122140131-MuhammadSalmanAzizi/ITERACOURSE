@@ -89,14 +89,14 @@ const HomePage = () => {
                 if (!carousel.matches(':hover')) {
                     carousel.scrollLeft += 1;
                 }
-                
+
                 if (carousel.scrollLeft >= carousel.scrollWidth / 2) {
                     carousel.scrollLeft -= carousel.scrollWidth / 2;
                 } else if (carousel.scrollLeft <= 0) {
                     carousel.scrollLeft += carousel.scrollWidth / 2;
                 }
             }
-            
+
             animationId = requestAnimationFrame(scroll);
         };
         animationId = requestAnimationFrame(scroll);
@@ -146,12 +146,12 @@ const HomePage = () => {
                 .from('categories')
                 .select('*, courses(id, status)')
                 .order('name');
-            
+
             const catsWithCounts = cats?.map(cat => ({
                 ...cat,
                 course_count: cat.courses?.filter(c => c.status === 'published').length || 0
             })) || [];
-            
+
             setCategoriesData(catsWithCounts);
 
             // Fetch stats
@@ -225,12 +225,14 @@ const HomePage = () => {
                     .maybeSingle();
 
                 if (cert) {
-                    setVerifyResult({ found: true, certificate: {
-                        id: cert.code,
-                        courseName: cert.course?.title,
-                        userName: cert.user?.full_name,
-                        issuedDate: cert.issued_at,
-                    }});
+                    setVerifyResult({
+                        found: true, certificate: {
+                            id: cert.code,
+                            courseName: cert.course?.title,
+                            userName: cert.user?.full_name,
+                            issuedDate: cert.issued_at,
+                        }
+                    });
                 } else {
                     setVerifyResult({ found: false });
                 }
@@ -273,7 +275,7 @@ const HomePage = () => {
                                 Explore Courses
                                 <ArrowRight size={20} />
                             </Link>
-                        <Link to="/login" className="btn btn-white btn-lg">
+                            <Link to="/login" className="btn btn-white btn-lg">
                                 Login
                             </Link>
                         </div>
@@ -285,9 +287,9 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                    <CountUp end={siteStats.totalStudents} formatter={formatNumber} />+
+                                        <CountUp end={siteStats.totalStudents} formatter={formatNumber} />+
                                     </p>
-                                    <p className="stat-label">Students</p>
+                                    <p className="stat-label">Users</p>
                                 </div>
                             </div>
                             <div className="stat-divider"></div>
@@ -297,7 +299,7 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                    <CountUp end={siteStats.totalCourses} formatter={formatNumber} />+
+                                        <CountUp end={siteStats.totalCourses} formatter={formatNumber} />+
                                     </p>
                                     <p className="stat-label">Courses</p>
                                 </div>
@@ -309,7 +311,7 @@ const HomePage = () => {
                                 </div>
                                 <div>
                                     <p className="stat-value">
-                                    <CountUp end={siteStats.totalCertificates} formatter={formatNumber} />+
+                                        <CountUp end={siteStats.totalCertificates} formatter={formatNumber} />+
                                     </p>
                                     <p className="stat-label">Certificates</p>
                                 </div>
@@ -407,7 +409,7 @@ const HomePage = () => {
                         <p>Find the perfect course in your favorite category</p>
                     </div>
                 </div>
-                <div 
+                <div
                     className="categories-carousel"
                     ref={carouselRef}
                     onMouseDown={handleMouseDown}

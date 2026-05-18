@@ -317,18 +317,18 @@ const NotificationsPage = () => {
 
     if (isAdmin) {
         return (
-            <div className="admin-page" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+            <div className="admin-page">
                 <AdminSidebar />
-                <main className="admin-main" style={{ flex: 1, padding: '2rem' }}>{content}</main>
+                <main className="admin-main">{content}</main>
             </div>
         );
     }
 
     if (isDosen) {
         return (
-            <div className="dosen-page" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+            <div className="dosen-page">
                 <DosenSidebar />
-                <main className="dosen-main" style={{ flex: 1, padding: '2rem' }}>{content}</main>
+                <main className="dosen-main">{content}</main>
             </div>
         );
     }
