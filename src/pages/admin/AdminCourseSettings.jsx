@@ -36,7 +36,6 @@ const AdminCourseSettings = () => {
             const { data, error } = await supabase.from('categories').insert({
                 name: newName.trim(),
                 icon: newIcon,
-                slug: newName.trim().toLowerCase().replace(/\s+/g, '-'),
             }).select().single();
             if (error) throw error;
             setCategories([...categories, data]);

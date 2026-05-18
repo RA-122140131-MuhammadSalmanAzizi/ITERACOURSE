@@ -538,34 +538,31 @@
 /* Categories Carousel */
 .categories-carousel {
     width: 100%;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     padding: 1rem 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    cursor: grab;
+}
+
+.categories-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.categories-carousel:active {
+    cursor: grabbing;
 }
 
 .categories-track {
     display: flex;
-    gap: 1.25rem;
-    animation: scroll 30s linear infinite;
     width: max-content;
-}
-
-.categories-track:hover {
-    animation-play-state: paused;
-}
-
-@keyframes scroll {
-    0% {
-        transform: translateX(0);
-    }
-
-    100% {
-        transform: translateX(-50%);
-    }
 }
 
 .category-card {
     flex-shrink: 0;
     width: 180px;
+    margin: 0 0.625rem;
     padding: 1.5rem;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
